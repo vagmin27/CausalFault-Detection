@@ -1,0 +1,10 @@
+﻿# Requirements for Causal Real-Time Adaptive Fault Tolerance in Edge-IoT Systems
+edgesimpy>=1.1.0
+simpy>=4.0.0
+river>=0.26.1
+torch>=2.0.0
+networkx>=3.0
+dowhy>=0.14
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.7.0
