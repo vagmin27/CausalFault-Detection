@@ -2,19 +2,19 @@
 Main CLI Application for Causal Real-Time Adaptive Fault Tolerance in Edge-IoT Systems.
 
 Supports four operational modes:
-  1. Simulation Mode (--mode simulation [--seed 42] [--persistence 3]):
-     Runs a single SimPy EdgeSimulation run with baseline comparisons.
-  2. Dataset Mode (--mode dataset --dataset ton_iot --data-path <path> [--max-records N]):
-     Streams real TON_IoT dataset records through TelemetryRecord interface.
-  3. Multi-Seed Experiment Mode (--mode experiment [--seed-start 42] [--num-seeds 10]):
-     Executes reproducible multi-seed evaluation across seeds 42-51.
-  4. Sensitivity Analysis Mode (--mode sensitivity):
-     Evaluates Detection Persistence values (1, 2, 3, 4, 5).
+    1. Simulation Mode (--mode simulation [--seed 42] [--persistence 3]):
+    Runs a single SimPy EdgeSimulation run with baseline comparisons.
+    2. Dataset Mode (--mode dataset --dataset ton_iot --data-path <path> [--max-records N]):
+    Streams real TON_IoT dataset records through TelemetryRecord interface.
+    3. Multi-Seed Experiment Mode (--mode experiment [--seed-start 42] [--num-seeds 10]):
+    Executes reproducible multi-seed evaluation across seeds 42-51.
+    4. Sensitivity Analysis Mode (--mode sensitivity):
+    Evaluates Detection Persistence values (1, 2, 3, 4, 5).
 
 Usage Examples:
-  python main.py --mode simulation --seed 42
-  python main.py --mode dataset --dataset ton_iot --data-path "data/datasets/Processed_IoT_dataset" --max-records 10000
-  python main.py --mode dataset --dataset ton_iot --data-path "data/datasets/Processed_IoT_dataset"
+    python main.py --mode simulation --seed 42
+    python main.py --mode dataset --dataset ton_iot --data-path "data/datasets/Processed_IoT_dataset" --max-records 10000
+    python main.py --mode dataset --dataset ton_iot --data-path "data/datasets/Processed_IoT_dataset"
 """
 
 import os
@@ -451,9 +451,9 @@ def run_dataset_experiment(
     """
     Run Real TON_IoT Dataset Evaluation using ultra-fast low-memory streaming.
     """
-    logger.info("==========================================================================")
+    logger.info("")
     logger.info("           REAL TON-IOT DATASET EXPERIMENT PIPELINE INGESTION             ")
-    logger.info("==========================================================================")
+    logger.info("")
     logger.info(f"Data Source Path: {data_path} | Max Records: {max_records or 'ALL (3.16M+)'}")
 
     data_dir = os.path.join(output_dir, "data")
@@ -739,9 +739,9 @@ def run_dataset_experiment(
     plt.savefig(p4, dpi=300)
     plt.close()
 
-    print("\n==========================================================================================")
-    print("                      REAL TON-IOT DATASET EXPERIMENT RESULTS SUMMARY                     ")
-    print("==========================================================================================")
+    print("\n")
+    print("REAL TON-IOT DATASET EXPERIMENT RESULTS SUMMARY                     ")
+    print("")
     print(f"Data Source:                TON-IoT ({data_path})")
     print(f"Total Records Processed:    {n_processed:,}")
     print(f"Detection Precision:        {precision * 100:.2f}%")
@@ -751,7 +751,7 @@ def run_dataset_experiment(
     print(f"Avg Detection Latency:      {avg_det_lat_ms:.4f} ms / record")
     print(f"Causal Inferences Count:    {causal_inference_count}")
     print(f"Insufficient Evidence:      {insufficient_evidence_count}")
-    print("==========================================================================================\n")
+    print("\n")
 
     return overall_metrics[0]
 
@@ -761,9 +761,7 @@ def run_persistence_sensitivity_experiment(seed: int = 42, output_dir: str = "re
     Evaluates Detection Persistence values (k = 1, 2, 3, 4, 5) to quantify
     the Precision/Recall/Delay tradeoff. Saves CSV metrics and research plots.
     """
-    logger.info("==========================================================================")
     logger.info("             DETECTION PERSISTENCE SENSITIVITY ANALYSIS                   ")
-    logger.info("==========================================================================")
     
     data_dir = os.path.join(output_dir, "data")
     plots_dir = os.path.join(output_dir, "plots")
@@ -829,14 +827,14 @@ def run_persistence_sensitivity_experiment(seed: int = 42, output_dir: str = "re
     plt.savefig(p2, dpi=300)
     plt.close()
 
-    print("\n==========================================================================================")
-    print("                 DETECTION PERSISTENCE SENSITIVITY RESULTS SUMMARY                        ")
-    print("==========================================================================================")
+    print("\n")
+    print("                 DETECTION PERSISTENCE SENSITIVITY RESULTS SUMMARY  ")
+    print("")
     print(f"{'Persistence k':<15} | {'Precision (%)':<15} | {'Recall (%)':<15} | {'F1-Score (%)':<15} | {'Delay (steps)':<15}")
     print("-" * 83)
     for row in sensitivity_rows:
         print(f"{row['persistence_k']:<15} | {row['precision']*100:<15.2f} | {row['recall']*100:<15.2f} | {row['f1_score']*100:<15.2f} | {row['avg_detection_delay_steps']:<15.2f}")
-    print("==========================================================================================\n")
+    print("\n")
 
     return sensitivity_rows
 
@@ -846,9 +844,9 @@ def run_multi_seed_experiment(seed_start: int = 42, num_seeds: int = 10, output_
     Executes reproducible multi-seed evaluation across specified seeds.
     Saves per-seed CSV, aggregated CSV, and multi-seed comparison plots with error bars.
     """
-    logger.info("==========================================================================")
+    logger.info("")
     logger.info(f"    MULTI-SEED EVALUATION EXPERIMENT ({num_seeds} SEEDS: {seed_start} TO {seed_start + num_seeds - 1})   ")
-    logger.info("==========================================================================")
+    logger.info("")
 
     data_dir = os.path.join(output_dir, "data")
     plots_dir = os.path.join(output_dir, "plots")
@@ -970,9 +968,9 @@ def run_multi_seed_experiment(seed_start: int = 42, num_seeds: int = 10, output_
     plt.savefig(os.path.join(plots_dir, "multi_seed_recovery_success.png"), dpi=300)
     plt.close()
 
-    print("\n==========================================================================================")
-    print(f"            MULTI-SEED AGGREGATE RESULTS SUMMARY ({num_seeds} SEEDS)                      ")
-    print("==========================================================================================")
+    print("\n")
+    print(f"            MULTI-SEED AGGREGATE RESULTS SUMMARY ({num_seeds} SEEDS)")
+    print("")
     print(f"{'Metric':<30} | {'Baseline 1 (No FT)':<20} | {'Baseline 2 (Fixed)':<20} | {'Proposed (Causal)':<20}")
     print("-" * 98)
     b1_agg = df_agg[df_agg["experiment_label"] == "BASELINE_NO_FAULT_TOLERANCE"].iloc[0]
@@ -988,16 +986,14 @@ def run_multi_seed_experiment(seed_start: int = 42, num_seeds: int = 10, output_
     print(f"{'Average CPU Utilization (%)':<30} | {b1_agg['cpu_mean']:>6.2f} ± {b1_agg['cpu_std']:<8.2f} | {b2_agg['cpu_mean']:>6.2f} ± {b2_agg['cpu_std']:<8.2f} | {p_agg['cpu_mean']:>6.2f} ± {p_agg['cpu_std']:<8.2f}")
     print(f"{'Detection F1-Score (%)':<30} | {b1_agg['f1_mean']:>6.2f} ± {b1_agg['f1_std']:<8.2f} | {b2_agg['f1_mean']:>6.2f} ± {b2_agg['f1_std']:<8.2f} | {p_agg['f1_mean']:>6.2f} ± {p_agg['f1_std']:<8.2f}")
     print(f"{'Recovery Success Rate (%)':<30} | {b1_rec_str:<20} | {b2_rec_str:<20} | {p_rec_str:<20}")
-    print("==========================================================================================\n")
+    print("\n")
 
     return df_agg
 
 
 def main():
     args = parse_args()
-    logger.info("==========================================================================")
     logger.info("  Causal Real-Time Adaptive Fault Tolerance for Edge-IoT Systems  ")
-    logger.info("==========================================================================")
     logger.info(f"Mode: {args.mode} | Seed: {args.seed} | Persistence: {args.persistence}")
 
     if args.mode == "experiment":
@@ -1048,9 +1044,8 @@ def main():
             experiment_label="BASELINE_FIXED_RECOVERY",
         )
 
-        print("\n==========================================================================================")
-        print("                                EXPERIMENTAL RESULTS SUMMARY                               ")
-        print("==========================================================================================")
+        print("\n")
+        print("EXPERIMENTAL RESULTS SUMMARY")
         print(f"{'Metric':<30} | {'Baseline 1 (No FT)':<20} | {'Baseline 2 (Fixed)':<20} | {'Proposed (Causal)':<20}")
         print("-" * 98)
         print(f"{'Service Availability (%)':<30} | {baseline1_res['service_availability']:<20.2f} | {baseline2_res['service_availability']:<20.2f} | {proposed_res['service_availability']:<20.2f}")
@@ -1062,7 +1057,7 @@ def main():
         print(f"{'Recovery Attempts (Episodes)':<30} | {baseline1_res['recovery_attempts_count']:<20} | {baseline2_res['recovery_attempts_count']:<20} | {proposed_res['recovery_attempts_count']:<20}")
         print(f"{'Successful Recovery Episodes':<30} | {baseline1_res['successful_recoveries_count']:<20} | {baseline2_res['successful_recoveries_count']:<20} | {proposed_res['successful_recoveries_count']:<20}")
         print(f"{'Recovery Success Rate':<30} | {baseline1_res['recovery_success_rate']:<20} | {baseline2_res['recovery_success_rate']:<20} | {proposed_res['recovery_success_rate']:<20}")
-        print("==========================================================================================\n")
+        print("\n")
 
 
 if __name__ == "__main__":

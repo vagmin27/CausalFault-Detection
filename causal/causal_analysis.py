@@ -15,6 +15,7 @@ import logging
 from typing import List, Dict, Any, Optional
 import pandas as pd
 import numpy as np
+# pyrefly: ignore [missing-import]
 from dowhy import CausalModel
 
 from data.telemetry import TelemetryRecord
