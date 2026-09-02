@@ -34,14 +34,21 @@ class TelemetryRecord:
     fault_type: Optional[str] = "NONE"           # e.g., "CPU_OVERLOAD", "NONE", or raw attack category
     original_label: Optional[str] = "NORMAL"     # raw label string from dataset
 
+    dataset_name: Optional[str] = "SIMULATION"   # e.g., "TON_IoT", "SIMULATION"
+    source_file: Optional[str] = None           # e.g., "IoT_Fridge.csv"
+    device_type: Optional[str] = None           # e.g., "IoT_Fridge", "IoT_Weather"
+    raw_features: Dict[str, Any] = field(default_factory=dict) # Raw sensor payload key-values
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert record to dictionary representation."""
-        return asdict(self)
+        d = asdict(self)
+        return d
 
     def get_available_features(self) -> Dict[str, float]:
         """
         Extract numerical telemetry feature dimensions that are not None.
         Returns a dictionary of feature_name -> float value.
+        Includes numerical raw sensor features when available.
         """
         features = {
             "cpu_utilization": self.cpu_utilization,
@@ -52,7 +59,18 @@ class TelemetryRecord:
             "throughput": self.throughput,
             "workload": self.workload,
         }
-        return {k: v for k, v in features.items() if v is not None}
+        res = {k: float(v) for k, v in features.items() if v is not None}
+        if self.raw_features:
+            for k, v in self.raw_features.items():
+                if isinstance(v, (int, float)) and not isinstance(v, bool):
+                    res[k] = float(v)
+        return res
+
+    def get_numeric_features(self) -> Dict[str, float]:
+        """
+        Get all numerical telemetry metrics available in record.
+        """
+        return self.get_available_features()
 
     def to_feature_vector(self, feature_order: Optional[List[str]] = None) -> List[float]:
         """
@@ -69,9 +87,13 @@ class TelemetryRecord:
                 "workload",
             ]
         vec = []
+        num_feats = self.get_numeric_features()
         for feat in feature_order:
-            val = getattr(self, feat, None)
-            vec.append(float(val) if val is not None else 0.0)
+            if feat in num_feats:
+                vec.append(num_feats[feat])
+            else:
+                val = getattr(self, feat, None)
+                vec.append(float(val) if val is not None else 0.0)
         return vec
 
     @classmethod

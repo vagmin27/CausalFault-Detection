@@ -2,14 +2,12 @@
 DoWhy Causal Analysis Engine.
 
 Performs treatment-specific causal effect estimation (Average Causal Effect - ACE)
-using DoWhy backdoor linear regression and NetworkX system graphs to determine root causes.
+using DoWhy backdoor linear regression and NetworkX system graphs to evaluate causal relationships.
 
-Non-Circular Treatment -> Outcome Mappings:
-    cpu_utilization     -> high_latency       (latency > 55ms)
-    memory_utilization  -> high_latency       (latency > 55ms)
-    network_utilization -> high_packet_loss   (packet_loss > 5%)
-    packet_loss         -> high_latency       (latency > 55ms)
-    latency             -> extreme_latency    (latency > 70ms)
+CRITICAL RULE:
+- Online causal analysis operates strictly on observable telemetry variables.
+- Ground-truth fault/attack labels (fault_label, original_label) MUST NOT be used as causal treatment or outcome.
+- If data is insufficient for defensible causal estimation, returns status INSUFFICIENT_EVIDENCE.
 """
 
 from dataclasses import dataclass, field
@@ -31,15 +29,15 @@ class CausalResult:
     Structured Causal Analysis Result output.
     Status can be:
         - "CAUSAL_INFERENCE": Valid DoWhy Average Causal Effect estimation.
-        - "HEURISTIC": Feature deviation fallback when sample/variance is insufficient.
+        - "HEURISTIC": Feature deviation fallback when sample/variance is insufficient (Simulation mode).
         - "INSUFFICIENT_EVIDENCE": Data insufficient for defensible cause determination.
     """
     treatment: str                          # Primary treatment variable evaluated
     outcome: str                            # Non-circular downstream outcome variable evaluated
     estimated_effect: float                 # Estimated ACE magnitude
     method: str                             # "backdoor.linear_regression"
-    root_cause: str                         # Identified root cause fault category
-    root_cause_source: str                  # "DOWHY_CAUSAL_INFERENCE", "HEURISTIC", "RULE_BASED", "INSUFFICIENT_EVIDENCE"
+    root_cause: str                         # Identified root cause category
+    root_cause_source: str                  # "DOWHY_CAUSAL_INFERENCE", "HEURISTIC", "INSUFFICIENT_EVIDENCE"
     causal_status: str                      # "CAUSAL_INFERENCE", "HEURISTIC", "INSUFFICIENT_EVIDENCE"
     refutation_status: str = "NOT_TESTED"   # "NOT_TESTED" or "PASSED"
     candidate_effects: Dict[str, float] = field(default_factory=dict)
@@ -53,7 +51,6 @@ class CausalAnalyzer:
 
     def __init__(self, causal_graph: Optional[SystemCausalGraph] = None):
         self.causal_graph = causal_graph if causal_graph is not None else SystemCausalGraph()
-        self.nx_graph = self.causal_graph.get_graph()
 
         self.treatment_map = {
             "cpu_utilization": "CPU_OVERLOAD",
@@ -63,7 +60,6 @@ class CausalAnalyzer:
             "latency": "HIGH_LATENCY",
         }
 
-        # Non-circular treatment -> downstream outcome mapping
         self.treatment_outcome_map = {
             "cpu_utilization": "high_latency",
             "memory_utilization": "high_latency",
@@ -79,16 +75,13 @@ class CausalAnalyzer:
         self,
         history_records: List[TelemetryRecord],
         target_node_id: Optional[str] = None,
+        mode: str = "simulation",
     ) -> CausalResult:
         """
         Analyze recent historical window of TelemetryRecords using DoWhy causal models.
         """
         node_key = target_node_id or "default"
         latest_ts = history_records[-1].timestamp if history_records else 0.0
-
-        # Debounce cache: reuse recent result if within 4.0 simulation time steps
-        if node_key in self._last_result and (latest_ts - self._last_analysis_time.get(node_key, -99.0) < 4.0):
-            return self._last_result[node_key]
 
         # Filter for relevant node records if target specified
         node_records = [
@@ -97,8 +90,8 @@ class CausalAnalyzer:
         ]
 
         if len(node_records) < 10:
-            logger.warning("[Causal Analyzer] Insufficient telemetry window length (<10 records) for estimation.")
-            res = CausalResult(
+            logger.debug("[Causal Analyzer] Insufficient telemetry window length (<10 records) for estimation.")
+            return CausalResult(
                 treatment="none",
                 outcome="none",
                 estimated_effect=0.0,
@@ -110,18 +103,89 @@ class CausalAnalyzer:
                 candidate_effects={},
                 supporting_variables=[],
             )
-            self._last_result[node_key] = res
-            self._last_analysis_time[node_key] = latest_ts
-            return res
 
         # Build Pandas DataFrame from historical telemetry window (NO ground truth fault_label leakage)
-        rows = [r.get_available_features() for r in node_records]
+        rows = [r.get_numeric_features() for r in node_records]
         df = pd.DataFrame(rows).fillna(0.0)
 
-        # Compute non-circular downstream outcome variables
-        df["high_latency"] = (df["latency"] > 55.0).astype(int)
-        df["high_packet_loss"] = (df["packet_loss"] > 5.0).astype(int)
-        df["extreme_latency"] = (df["latency"] > 70.0).astype(int)
+        # Dataset mode causal analysis
+        if mode == "dataset":
+            device_type = node_records[-1].device_type or "unknown"
+            dataset_graph = SystemCausalGraph(mode="dataset", device_type=device_type)
+            nx_graph = dataset_graph.get_graph()
+
+            if nx_graph.number_of_edges() == 0:
+                return CausalResult(
+                    treatment="none",
+                    outcome="none",
+                    estimated_effect=0.0,
+                    method="dataset_domain_check",
+                    root_cause="SENSOR_ANOMALY",
+                    root_cause_source="INSUFFICIENT_EVIDENCE",
+                    causal_status="INSUFFICIENT_EVIDENCE",
+                    refutation_status="NOT_TESTED",
+                    candidate_effects={},
+                    supporting_variables=[],
+                )
+
+            candidate_effects = {}
+            for u, v in nx_graph.edges():
+                if u in df.columns and v in df.columns:
+                    if df[u].nunique() > 1 and df[v].nunique() > 1:
+                        try:
+                            model = CausalModel(
+                                data=df,
+                                treatment=u,
+                                outcome=v,
+                                graph=nx_graph,
+                                logging_level=logging.ERROR,
+                            )
+                            identified_estimand = model.identify_effect(proceed_when_unidentifiable=True)
+                            estimate = model.estimate_effect(
+                                identified_estimand,
+                                method_name="backdoor.linear_regression",
+                                test_significance=False,
+                            )
+                            effect_val = abs(float(estimate.value)) if estimate.value is not None else 0.0
+                            candidate_effects[f"{u}->{v}"] = round(effect_val, 4)
+                        except Exception as e:
+                            logger.debug(f"DoWhy estimation error for dataset {u}->{v}: {e}")
+
+            if not candidate_effects or max(candidate_effects.values(), default=0.0) == 0.0:
+                return CausalResult(
+                    treatment="none",
+                    outcome="none",
+                    estimated_effect=0.0,
+                    method="backdoor.linear_regression",
+                    root_cause="INSUFFICIENT_VARIANCE",
+                    root_cause_source="INSUFFICIENT_EVIDENCE",
+                    causal_status="INSUFFICIENT_EVIDENCE",
+                    refutation_status="NOT_TESTED",
+                    candidate_effects=candidate_effects,
+                    supporting_variables=list(candidate_effects.keys()),
+                )
+
+            best_pair = max(candidate_effects, key=candidate_effects.get)
+            top_effect = candidate_effects[best_pair]
+            u_var, v_var = best_pair.split("->")
+
+            return CausalResult(
+                treatment=u_var,
+                outcome=v_var,
+                estimated_effect=top_effect,
+                method="backdoor.linear_regression",
+                root_cause=f"SENSOR_DEV_{u_var.upper()}",
+                root_cause_source="DOWHY_CAUSAL_INFERENCE",
+                causal_status="CAUSAL_INFERENCE",
+                refutation_status="NOT_TESTED",
+                candidate_effects=candidate_effects,
+                supporting_variables=list(candidate_effects.keys()),
+            )
+
+        # Simulation mode causal analysis
+        df["high_latency"] = (df["latency"] > 55.0).astype(int) if "latency" in df.columns else 0
+        df["high_packet_loss"] = (df["packet_loss"] > 5.0).astype(int) if "packet_loss" in df.columns else 0
+        df["extreme_latency"] = (df["latency"] > 70.0).astype(int) if "latency" in df.columns else 0
 
         candidate_treatments = self.causal_graph.get_candidate_treatments()
         candidate_effects: Dict[str, float] = {}
@@ -131,33 +195,25 @@ class CausalAnalyzer:
                 continue
 
             outcome = self.treatment_outcome_map.get(treatment, "high_latency")
-
             if outcome not in df.columns or df[outcome].nunique() <= 1:
                 continue
 
             try:
-                # Pass NetworkX DiGraph directly to DoWhy CausalModel
                 model = CausalModel(
                     data=df,
                     treatment=treatment,
                     outcome=outcome,
-                    graph=self.nx_graph,
+                    graph=self.causal_graph.get_graph(),
                     logging_level=logging.ERROR,
                 )
-
-                # Identify causal effect via backdoor criterion
                 identified_estimand = model.identify_effect(proceed_when_unidentifiable=True)
-
-                # Estimate causal effect using backdoor linear regression
                 estimate = model.estimate_effect(
                     identified_estimand,
                     method_name="backdoor.linear_regression",
                     test_significance=False,
                 )
-
                 effect_val = abs(float(estimate.value)) if estimate.value is not None else 0.0
                 candidate_effects[treatment] = round(effect_val, 4)
-
             except Exception as e:
                 logger.debug(f"DoWhy estimation error for treatment '{treatment}': {e}")
                 candidate_effects[treatment] = 0.0
@@ -168,16 +224,10 @@ class CausalAnalyzer:
             self._last_analysis_time[node_key] = latest_ts
             return res
 
-        # Identify treatment with strongest causal effect on its downstream outcome
         best_treatment = max(candidate_effects, key=candidate_effects.get)
         top_effect = candidate_effects[best_treatment]
         identified_root_cause = self.treatment_map.get(best_treatment, "CPU_OVERLOAD")
         best_outcome = self.treatment_outcome_map.get(best_treatment, "high_latency")
-
-        logger.info(
-            f"[DOWHY CAUSAL INFERENCE] Root cause identified: '{identified_root_cause}' "
-            f"(Treatment: {best_treatment} -> Outcome: {best_outcome}, ACE: {top_effect})"
-        )
 
         res = CausalResult(
             treatment=best_treatment,
@@ -201,8 +251,7 @@ class CausalAnalyzer:
         node_records: List[TelemetryRecord],
     ) -> CausalResult:
         """
-        Fallback feature z-score deviation analyzer when DoWhy sample size or label variance is low.
-        Returns status 'HEURISTIC' and root_cause_source 'HEURISTIC'.
+        Fallback feature z-score deviation analyzer for simulation mode when DoWhy sample size is low.
         """
         candidate_effects = {}
         for feat in ["cpu_utilization", "memory_utilization", "network_utilization", "packet_loss", "latency"]:

@@ -26,9 +26,9 @@ class RiverFaultDetector:
 
     def __init__(
         self,
-        n_trees: int = 25,
-        height: int = 15,
-        window_size: int = 100,
+        n_trees: int = 10,
+        height: int = 8,
+        window_size: int = 250,
         anomaly_threshold: float = 0.65,
         seed: int = 42,
     ):
@@ -61,7 +61,8 @@ class RiverFaultDetector:
 
         # Score observation before updating (unseen streaming evaluation)
         raw_score = self.model.score_one(x)
-        self.score_history.append(raw_score)
+        if len(self.score_history) < 10000:
+            self.score_history.append(raw_score)
 
         # Update streaming model with current observation
         self.model.learn_one(x)

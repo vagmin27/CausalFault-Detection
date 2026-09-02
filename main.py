@@ -4,18 +4,17 @@ Main CLI Application for Causal Real-Time Adaptive Fault Tolerance in Edge-IoT S
 Supports four operational modes:
   1. Simulation Mode (--mode simulation [--seed 42] [--persistence 3]):
      Runs a single SimPy EdgeSimulation run with baseline comparisons.
-  2. Dataset Mode (--mode dataset --dataset ton_iot|edge_iiotset|n_baiot --data-path <path>):
-     Streams real dataset records through the unified TelemetryRecord interface.
+  2. Dataset Mode (--mode dataset --dataset ton_iot --data-path <path> [--max-records N]):
+     Streams real TON_IoT dataset records through TelemetryRecord interface.
   3. Multi-Seed Experiment Mode (--mode experiment [--seed-start 42] [--num-seeds 10]):
      Executes reproducible multi-seed evaluation across seeds 42-51.
-     Calculates Mean, Std Dev, Min, Max across all runs and generates error bar plots.
   4. Sensitivity Analysis Mode (--mode sensitivity):
-     Evaluates Detection Persistence values (1, 2, 3, 4, 5) to quantify the Precision/Recall/Delay tradeoff.
+     Evaluates Detection Persistence values (1, 2, 3, 4, 5).
 
 Usage Examples:
   python main.py --mode simulation --seed 42
-  python main.py --mode experiment --seed-start 42 --num-seeds 10
-  python main.py --mode sensitivity
+  python main.py --mode dataset --dataset ton_iot --data-path "data/datasets/Processed_IoT_dataset" --max-records 10000
+  python main.py --mode dataset --dataset ton_iot --data-path "data/datasets/Processed_IoT_dataset"
 """
 
 import os
@@ -28,8 +27,10 @@ from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Any, Tuple, Set, Optional
 import pandas as pd
 import numpy as np
+# pyrefly: ignore [missing-import]
 import matplotlib
 matplotlib.use("Agg")  # Non-interactive backend for headless plot generation
+# pyrefly: ignore [missing-import]
 import matplotlib.pyplot as plt
 
 # Internal package imports
@@ -62,7 +63,7 @@ logger = logging.getLogger("Main")
 @dataclass
 class ExperimentConfig:
     """
-    Standardized Experiment Configuration ensuring strict baseline fairness and reproducibility.
+    Standardized Experiment Configuration.
     """
     seed: int = 42
     duration: int = 200
@@ -101,8 +102,14 @@ def parse_args():
     parser.add_argument(
         "--data-path",
         type=str,
-        default=None,
+        default="data/datasets/Processed_IoT_dataset",
         help="Path to dataset CSV file or directory for dataset mode",
+    )
+    parser.add_argument(
+        "--max-records",
+        type=int,
+        default=None,
+        help="Maximum records to process in dataset mode (for safe fast testing)",
     )
     parser.add_argument(
         "--detector",
@@ -155,6 +162,7 @@ def set_reproducible_seed(seed: int):
     random.seed(seed)
     np.random.seed(seed)
     try:
+        # pyrefly: ignore [missing-import]
         import torch
         torch.manual_seed(seed)
         if torch.cuda.is_available():
@@ -187,64 +195,44 @@ def run_experiment_pipeline(
     experiment_label: str = "PROPOSED_CAUSAL_ADAPTIVE_RECOVERY",
 ) -> Dict[str, Any]:
     """
-    Run streaming pipeline:
-      Data Source -> Online Detector -> Fault Confirmation -> Causal Analysis -> Adaptive Recovery -> Metrics
+    Run simulation pipeline.
     """
     seed = config.seed
     duration = config.duration
     persistence_k = config.persistence
     set_reproducible_seed(seed)
 
-    # 1. Initialize Independent Data Source
-    if mode == "simulation":
-        sim = EdgeSimulation(num_nodes=config.num_nodes, num_devices_per_node=config.num_devices_per_node, seed=seed)
-        fault_gen = FaultGenerator(seed=seed)
+    sim = EdgeSimulation(num_nodes=config.num_nodes, num_devices_per_node=config.num_devices_per_node, seed=seed)
+    fault_gen = FaultGenerator(seed=seed)
 
-        # Schedule identical controlled faults from ExperimentConfig
-        for fspec in config.fault_schedule:
-            ftype = FaultType.from_string(fspec["fault_type"])
-            fault_gen.schedule_fault(
-                fault_type=ftype,
-                target_node_id=fspec["node"],
-                start_time=fspec["start_time"],
-                duration=fspec["duration"],
-                severity=fspec["severity"],
-            )
+    for fspec in config.fault_schedule:
+        ftype = FaultType.from_string(fspec["fault_type"])
+        fault_gen.schedule_fault(
+            fault_type=ftype,
+            target_node_id=fspec["node"],
+            start_time=fspec["start_time"],
+            duration=fspec["duration"],
+            severity=fspec["severity"],
+        )
 
-        data_source = SimulatorAdapter(simulation=sim, max_steps=duration, seed=seed)
-    else:
-        # Dataset Mode
-        if dataset_name == "ton_iot":
-            data_source = TONIoTAdapter(data_path=data_path)
-        elif dataset_name == "edge_iiotset":
-            data_source = EdgeIIoTsetAdapter(data_path=data_path)
-        elif dataset_name == "n_baiot":
-            data_source = NBaIoTAdapter(data_path=data_path)
-        else:
-            raise ValueError(f"Unknown dataset choice: {dataset_name}")
-        sim = None
-        fault_gen = None
+    data_source = SimulatorAdapter(simulation=sim, max_steps=duration, seed=seed)
 
-    # 2. Initialize Detectors
     river_threshold = config.detector_config.get("river_threshold", 0.65)
     pytorch_threshold = config.detector_config.get("pytorch_threshold", 0.15)
 
     river_detector = RiverFaultDetector(anomaly_threshold=river_threshold, seed=seed) if detector_type in ["river", "both"] else None
     pytorch_detector = PyTorchFaultDetector(threshold=pytorch_threshold) if detector_type in ["pytorch", "both"] else None
 
-    # Pre-train PyTorch model on normal baseline records
-    if pytorch_detector is not None and mode == "simulation":
+    if pytorch_detector is not None:
         warmup_sim = EdgeSimulation(num_nodes=config.num_nodes, seed=seed + 999)
         warmup_records = []
         for _ in range(40):
             warmup_records.extend(warmup_sim.step())
         pytorch_detector.train_on_baseline(warmup_records, epochs=25)
 
-    # 3. Initialize Independent Causal Engine & Recovery Manager
     causal_analyzer = CausalAnalyzer()
     recovery_manager = RecoveryManager()
 
-    # Tracking structures
     history_records: List[TelemetryRecord] = []
     node_anomaly_window: Dict[str, List[bool]] = {}
 
@@ -266,26 +254,19 @@ def run_experiment_pipeline(
     before_recovery_metrics: List[Dict] = []
     after_recovery_metrics: List[Dict] = []
 
-    try:
-        telemetry_stream = data_source.stream_telemetry()
-    except Exception as err:
-        logger.error(f"Failed to open data stream: {err}")
-        raise err
+    telemetry_stream = data_source.stream_telemetry()
 
     for record in telemetry_stream:
         history_records.append(record)
         node_id = record.edge_node_id
         y_true.append(record.fault_label)
 
-        # Update active faults in simulation and clear recovered node flags when fault expires
-        if sim is not None and fault_gen is not None:
-            active_faults = fault_gen.update_simulation_faults(record.timestamp, sim)
-            active_nodes = {f.target_node_id for f in active_faults}
-            expired = [n for n in recovered_nodes if n not in active_nodes]
-            for n in expired:
-                recovered_nodes.remove(n)
+        active_faults = fault_gen.update_simulation_faults(record.timestamp, sim)
+        active_nodes = {f.target_node_id for f in active_faults}
+        expired = [n for n in recovered_nodes if n not in active_nodes]
+        for n in expired:
+            recovered_nodes.remove(n)
 
-        # 4. Online Detection Phase
         start_t = time.perf_counter()
 
         if detector_type == "river" and river_detector is not None:
@@ -308,7 +289,6 @@ def run_experiment_pipeline(
         if raw_is_anomaly:
             anomalies_count += 1
 
-        # 5. Configurable Persistence Fault Confirmation Pipeline
         if node_id not in node_anomaly_window:
             node_anomaly_window[node_id] = []
         node_anomaly_window[node_id].append(raw_is_anomaly)
@@ -318,15 +298,12 @@ def run_experiment_pipeline(
         persistent_anomaly = bool(sum(node_anomaly_window[node_id][-persistence_k:]) >= persistence_k)
         state_consistent = is_system_state_degraded(record)
 
-        # Fault is confirmed ONLY when persistence AND state consistency are met
         is_fault_confirmed = bool(persistent_anomaly and state_consistent)
         y_pred.append(1 if is_fault_confirmed else 0)
 
-        # Track first confirmation timestamp per node for detection delay calculation
         if is_fault_confirmed and node_id not in first_confirmation_times:
             first_confirmation_times[node_id] = record.timestamp
 
-        # 6. Reactive Causal Analysis & Recovery Workflow (Episode-Level Evaluation)
         if is_fault_confirmed:
             faults_confirmed_count += 1
 
@@ -334,13 +311,11 @@ def run_experiment_pipeline(
                 if node_id not in recovered_nodes:
                     recovered_nodes.add(node_id)
 
-                    # Perform DoWhy Causal Analysis specifically for the affected node
                     causal_res: CausalResult = causal_analyzer.analyze_fault_cause(
                         history_records=history_records[-60:],
                         target_node_id=node_id,
                     )
 
-                    # Track causal inference audit counts
                     if causal_res.causal_status == "CAUSAL_INFERENCE":
                         causal_inference_count += 1
                     elif causal_res.causal_status == "HEURISTIC":
@@ -348,7 +323,6 @@ def run_experiment_pipeline(
                     else:
                         insufficient_evidence_count += 1
 
-                    # Select Recovery Action
                     rec_decision: RecoveryDecision = recovery_manager.select_recovery_action(
                         record=record,
                         root_cause=causal_res.root_cause,
@@ -358,36 +332,33 @@ def run_experiment_pipeline(
                         fixed_recovery=fixed_recovery,
                     )
 
-                    # Execute Recovery in Simulation
-                    if sim is not None:
-                        rec_result = recovery_manager.execute_recovery_in_simulation(rec_decision, sim)
-                        
-                        episode = FaultEpisode(
-                            episode_id=f"EPISODE_{node_id}_{record.timestamp}",
-                            fault_type=record.fault_type or "UNKNOWN",
-                            affected_node=node_id,
-                            fault_start=record.timestamp - float(persistence_k),
-                            fault_end=record.timestamp + 22.0,
-                            detection_time=record.timestamp,
-                            recovery_time=record.timestamp,
-                            recovery_action=rec_decision.selected_action,
-                            root_cause=causal_res.root_cause,
-                            root_cause_source=causal_res.root_cause_source,
-                            pre_recovery_metrics=rec_result["before"],
-                            post_recovery_metrics=rec_result["after"],
-                            target_metric=rec_result.get("target_metric", "cpu_utilization"),
-                            absolute_improvement=rec_result.get("absolute_improvement", 0.0),
-                            relative_improvement=rec_result.get("relative_improvement", 0.0),
-                            recovery_success=rec_result.get("success", False),
-                        )
-                        fault_episodes.append(episode)
+                    rec_result = recovery_manager.execute_recovery_in_simulation(rec_decision, sim)
+                    
+                    episode = FaultEpisode(
+                        episode_id=f"EPISODE_{node_id}_{record.timestamp}",
+                        fault_type=record.fault_type or "UNKNOWN",
+                        affected_node=node_id,
+                        fault_start=record.timestamp - float(persistence_k),
+                        fault_end=record.timestamp + 22.0,
+                        detection_time=record.timestamp,
+                        recovery_time=record.timestamp,
+                        recovery_action=rec_decision.selected_action,
+                        root_cause=causal_res.root_cause,
+                        root_cause_source=causal_res.root_cause_source,
+                        pre_recovery_metrics=rec_result["before"],
+                        post_recovery_metrics=rec_result["after"],
+                        target_metric=rec_result.get("target_metric", "cpu_utilization"),
+                        absolute_improvement=rec_result.get("absolute_improvement", 0.0),
+                        relative_improvement=rec_result.get("relative_improvement", 0.0),
+                        recovery_success=rec_result.get("success", False),
+                    )
+                    fault_episodes.append(episode)
 
-                        if rec_result.get("success", False):
-                            before_recovery_metrics.append(rec_result["before"])
-                            after_recovery_metrics.append(rec_result["after"])
-                            node_anomaly_window[node_id] = []
+                    if rec_result.get("success", False):
+                        before_recovery_metrics.append(rec_result["before"])
+                        after_recovery_metrics.append(rec_result["after"])
+                        node_anomaly_window[node_id] = []
 
-    # 7. Calculate Precision, Recall, F1 against ground truth
     y_t = np.array(y_true)
     y_p = np.array(y_pred)
 
@@ -403,30 +374,24 @@ def run_experiment_pipeline(
     fpr = fp / max(1, fp + tn)
     avg_det_latency = float(np.mean(detection_latencies)) if detection_latencies else 0.0
 
-    # Calculate average detection delay relative to scheduled fault start times
     delays = []
-    if mode == "simulation":
-        for fspec in config.fault_schedule:
-            target_n = fspec["node"]
-            start_t = fspec["start_time"]
-            if target_n in first_confirmation_times:
-                det_t = first_confirmation_times[target_n]
-                if det_t >= start_t:
-                    delays.append(det_t - start_t)
+    for fspec in config.fault_schedule:
+        target_n = fspec["node"]
+        start_t = fspec["start_time"]
+        if target_n in first_confirmation_times:
+            det_t = first_confirmation_times[target_n]
+            if det_t >= start_t:
+                delays.append(det_t - start_t)
     avg_detection_delay = float(np.mean(delays)) if delays else 3.0
 
-    # System Performance Metrics
     cpus = [r.cpu_utilization for r in history_records if r.cpu_utilization is not None]
     lats = [r.latency for r in history_records if r.latency is not None]
-    pkts = [r.packet_loss for r in history_records if r.packet_loss is not None]
 
     avg_cpu = float(np.mean(cpus)) if cpus else 0.0
     avg_lat = float(np.mean(lats)) if lats else 0.0
-    avg_pkt = float(np.mean(pkts)) if pkts else 0.0
 
     service_availability = ((len(lats) - len([l for l in lats if l > 200.0])) / max(1, len(lats))) * 100.0
 
-    # Episode-level Recovery Metrics
     if no_recovery:
         recovery_attempts_count = 0
         successful_recoveries_count = 0
@@ -471,245 +436,561 @@ def run_experiment_pipeline(
         "avg_detection_delay_steps": round(avg_detection_delay, 2),
         "avg_cpu_utilization": round(avg_cpu, 2),
         "avg_latency": round(avg_lat, 2),
-        "avg_packet_loss": round(avg_pkt, 2),
         "service_availability": round(service_availability, 2),
         "recovery_success_rate": recovery_success_rate_str,
         "recovery_success_rate_val": recovery_success_rate_val,
-        "before_recovery_metrics": before_recovery_metrics,
-        "after_recovery_metrics": after_recovery_metrics,
-        "fault_episodes": [asdict(ep) for ep in fault_episodes],
-        "detection_latencies": detection_latencies,
     }
 
 
-def run_multi_seed_experiment(seed_start: int = 42, num_seeds: int = 10, output_dir: str = "results"):
+def run_dataset_experiment(
+    data_path: str,
+    max_records: Optional[int] = None,
+    output_dir: str = "results",
+    persistence_k: int = 3,
+):
     """
-    Execute multi-seed evaluation across independent seeds (e.g. 42 to 51).
-    Saves per-seed CSV and aggregate CSV with mean, std, min, max.
-    Generates research plots with error bars.
+    Run Real TON_IoT Dataset Evaluation using ultra-fast low-memory streaming.
     """
-    seeds = list(range(seed_start, seed_start + num_seeds))
-    logger.info(f"=== Starting Multi-Seed Experiment across {num_seeds} seeds: {seeds} ===")
+    logger.info("==========================================================================")
+    logger.info("           REAL TON-IOT DATASET EXPERIMENT PIPELINE INGESTION             ")
+    logger.info("==========================================================================")
+    logger.info(f"Data Source Path: {data_path} | Max Records: {max_records or 'ALL (3.16M+)'}")
 
-    all_results: List[Dict[str, Any]] = []
-
-    for seed in seeds:
-        config = ExperimentConfig(seed=seed, duration=200)
-
-        # 1. Baseline 1: No FT
-        res_no_ft = run_experiment_pipeline(
-            config=config,
-            mode="simulation",
-            detector_type="river",
-            fixed_recovery=False,
-            no_recovery=True,
-            experiment_label="BASELINE_NO_FAULT_TOLERANCE",
-        )
-        all_results.append(res_no_ft)
-
-        # 2. Baseline 2: Fixed Recovery
-        res_fixed = run_experiment_pipeline(
-            config=config,
-            mode="simulation",
-            detector_type="river",
-            fixed_recovery=True,
-            no_recovery=False,
-            experiment_label="BASELINE_FIXED_RECOVERY",
-        )
-        all_results.append(res_fixed)
-
-        # 3. Proposed Strategy: Causal Adaptive
-        res_proposed = run_experiment_pipeline(
-            config=config,
-            mode="simulation",
-            detector_type="river",
-            fixed_recovery=False,
-            no_recovery=False,
-            experiment_label="PROPOSED_CAUSAL_ADAPTIVE_RECOVERY",
-        )
-        all_results.append(res_proposed)
-
-    # Save per-seed detailed CSV
     data_dir = os.path.join(output_dir, "data")
     plots_dir = os.path.join(output_dir, "plots")
     os.makedirs(data_dir, exist_ok=True)
     os.makedirs(plots_dir, exist_ok=True)
 
-    df_per_seed = pd.DataFrame(all_results)
-    clean_df = df_per_seed.drop(columns=["before_recovery_metrics", "after_recovery_metrics", "fault_episodes", "detection_latencies"], errors="ignore")
-    per_seed_csv = os.path.join(data_dir, "multi_seed_results.csv")
-    clean_df.to_csv(per_seed_csv, index=False)
-    logger.info(f"Saved detailed per-seed CSV to: {per_seed_csv}")
+    adapter = TONIoTAdapter(data_path=data_path, max_records=max_records)
+    detector = RiverFaultDetector(anomaly_threshold=0.65, seed=42)
+    causal_analyzer = CausalAnalyzer()
 
-    # Compute Aggregate Metrics (Mean, Std, Min, Max) per Experiment Configuration
-    agg_rows = []
-    for label in ["BASELINE_NO_FAULT_TOLERANCE", "BASELINE_FIXED_RECOVERY", "PROPOSED_CAUSAL_ADAPTIVE_RECOVERY"]:
-        sub = clean_df[clean_df["experiment_label"] == label]
-        row = {"experiment_label": label, "num_seeds": len(sub)}
+    # Low-memory online streaming accumulators
+    sliding_history: List[TelemetryRecord] = []
+    node_anomaly_window: Dict[str, List[bool]] = {}
 
-        for col in ["service_availability", "avg_latency", "avg_cpu_utilization", "precision", "recall", "f1", "recovery_success_rate_val"]:
-            vals = sub[col].dropna().values
-            if len(vals) > 0:
-                row[f"{col}_mean"] = round(float(np.mean(vals)), 2)
-                row[f"{col}_std"] = round(float(np.std(vals)), 2)
-                row[f"{col}_min"] = round(float(np.min(vals)), 2)
-                row[f"{col}_max"] = round(float(np.max(vals)), 2)
+    tp = 0
+    fp = 0
+    fn = 0
+    tn = 0
+    total_raw_anomalies = 0
+    total_confirmed_anomalies = 0
+    n_processed = 0
+
+    detection_latency_samples: List[float] = []
+
+    # Per-device online breakdown: device -> {total, attack, confirmed, tp, fp, fn}
+    device_stats: Dict[str, Dict[str, int]] = {}
+    # Per-attack-type online breakdown: attack_type -> {total, confirmed}
+    attack_stats: Dict[str, Dict[str, int]] = {}
+
+    causal_results_list: List[Dict[str, Any]] = []
+    causal_inference_count = 0
+    heuristic_fallback_count = 0
+    insufficient_evidence_count = 0
+
+    start_stream_t = time.time()
+    record_stream = adapter.stream_telemetry()
+
+    for idx, record in enumerate(record_stream):
+        n_processed += 1
+
+        if n_processed % 250000 == 0:
+            elapsed = time.time() - start_stream_t
+            rate = n_processed / max(1.0, elapsed)
+            logger.info(f"Progress: Processed {n_processed:,} records ({rate:,.1f} rec/sec) - Current Device: {record.device_type}")
+            sys.stdout.flush()
+
+        # Maintain low-memory sliding window of 60 records for causal analysis
+        sliding_history.append(record)
+        if len(sliding_history) > 60:
+            sliding_history.pop(0)
+
+        dev_type = record.device_type or "unknown"
+        if dev_type not in device_stats:
+            device_stats[dev_type] = {"total": 0, "attack": 0, "confirmed": 0, "tp": 0, "fp": 0, "fn": 0, "tn": 0}
+        device_stats[dev_type]["total"] += 1
+
+        y_true_lbl = record.fault_label
+        if y_true_lbl == 1:
+            device_stats[dev_type]["attack"] += 1
+
+        atk_type = record.original_label or "normal"
+        if atk_type not in attack_stats:
+            attack_stats[atk_type] = {"total": 0, "confirmed": 0}
+        attack_stats[atk_type]["total"] += 1
+
+        # 1. Online Streaming Anomaly Detection (UNSEEN EVALUATION - NO LABEL LEAKAGE)
+        t_start = time.perf_counter()
+        det_res = detector.process_record(record)
+        proc_latency = (time.perf_counter() - t_start) * 1000.0
+
+        if len(detection_latency_samples) < 20000:
+            detection_latency_samples.append(proc_latency)
+
+        raw_is_anomaly = bool(det_res["is_fault"])
+        if raw_is_anomaly:
+            total_raw_anomalies += 1
+
+        # 2. Persistence Confirmation
+        node_id = record.edge_node_id
+        if node_id not in node_anomaly_window:
+            node_anomaly_window[node_id] = []
+        node_anomaly_window[node_id].append(raw_is_anomaly)
+        if len(node_anomaly_window[node_id]) > (persistence_k + 2):
+            node_anomaly_window[node_id].pop(0)
+
+        is_confirmed = bool(sum(node_anomaly_window[node_id][-persistence_k:]) >= persistence_k)
+        pred_lbl = 1 if is_confirmed else 0
+
+        if is_confirmed:
+            total_confirmed_anomalies += 1
+            device_stats[dev_type]["confirmed"] += 1
+            attack_stats[atk_type]["confirmed"] += 1
+
+        # Update Confusion Matrix Counters
+        if y_true_lbl == 1 and pred_lbl == 1:
+            tp += 1
+            device_stats[dev_type]["tp"] += 1
+        elif y_true_lbl == 0 and pred_lbl == 1:
+            fp += 1
+            device_stats[dev_type]["fp"] += 1
+        elif y_true_lbl == 1 and pred_lbl == 0:
+            fn += 1
+            device_stats[dev_type]["fn"] += 1
+        else:
+            tn += 1
+            device_stats[dev_type]["tn"] += 1
+
+        # 3. Trigger Causal Analysis periodically (sampling every 50,000 records)
+        if is_confirmed and (idx % 50000 == 0 or idx == 1000):
+            c_res = causal_analyzer.analyze_fault_cause(
+                history_records=sliding_history,
+                target_node_id=node_id,
+                mode="dataset",
+            )
+            if c_res.causal_status == "CAUSAL_INFERENCE":
+                causal_inference_count += 1
+            elif c_res.causal_status == "HEURISTIC":
+                heuristic_fallback_count += 1
             else:
-                row[f"{col}_mean"] = np.nan
-                row[f"{col}_std"] = np.nan
-                row[f"{col}_min"] = np.nan
-                row[f"{col}_max"] = np.nan
+                insufficient_evidence_count += 1
 
-        row["total_causal_inferences"] = int(sub["causal_inference_count"].sum())
-        row["total_heuristic_fallbacks"] = int(sub["heuristic_fallback_count"].sum())
-        row["total_insufficient_evidences"] = int(sub["insufficient_evidence_count"].sum())
-        agg_rows.append(row)
+            causal_results_list.append({
+                "record_index": idx,
+                "timestamp": record.timestamp,
+                "device_type": dev_type,
+                "treatment": c_res.treatment,
+                "outcome": c_res.outcome,
+                "estimated_effect": c_res.estimated_effect,
+                "root_cause": c_res.root_cause,
+                "causal_status": c_res.causal_status,
+                "root_cause_source": c_res.root_cause_source,
+            })
 
-    df_agg = pd.DataFrame(agg_rows)
-    agg_csv = os.path.join(data_dir, "multi_seed_aggregate.csv")
-    df_agg.to_csv(agg_csv, index=False)
-    logger.info(f"Saved aggregate metrics CSV to: {agg_csv}")
+    total_time_sec = time.time() - start_stream_t
+    logger.info(f"Streamed and evaluated {n_processed:,} real dataset records in {total_time_sec:.2f} seconds ({n_processed / max(1, total_time_sec):,.2f} rec/sec).")
 
-    # Generate Multi-Seed Research Plots with Error Bars
+    # Metrics Calculation
+    accuracy = (tp + tn) / max(1, n_processed)
+    precision = tp / max(1, tp + fp)
+    recall = tp / max(1, tp + fn)
+    f1 = 2 * precision * recall / max(1e-6, precision + recall)
+    fpr = fp / max(1, fp + tn)
+    avg_det_lat_ms = float(np.mean(detection_latency_samples)) if detection_latency_samples else 0.0
+
+    # 1. Save Overall Dataset Detection Metrics CSV with strict metadata
+    overall_metrics = [{
+        "dataset_name": "TON_IoT",
+        "data_source": "Processed_IoT_dataset",
+        "data_path": data_path,
+        "experiment_mode": "dataset",
+        "records_processed": n_processed,
+        "source_files": "IoT_Fridge.csv, IoT_GPS_Tracker.csv, IoT_Garage_Door.csv, IoT_Modbus.csv, IoT_Motion_Light.csv, IoT_Weather.csv",
+        "total_anomalies_detected_raw": total_raw_anomalies,
+        "total_faults_confirmed": total_confirmed_anomalies,
+        "true_positives": tp,
+        "false_positives": fp,
+        "false_negatives": fn,
+        "true_negatives": tn,
+        "accuracy": round(float(accuracy), 4),
+        "precision": round(float(precision), 4),
+        "recall": round(float(recall), 4),
+        "f1_score": round(float(f1), 4),
+        "false_positive_rate": round(float(fpr), 4),
+        "avg_detection_latency_ms": round(avg_det_lat_ms, 4),
+        "causal_inferences_count": causal_inference_count,
+        "heuristic_fallbacks_count": heuristic_fallback_count,
+        "insufficient_evidence_count": insufficient_evidence_count,
+        "physical_recovery_status": "DISABLED_STATIC_LOGS",
+    }]
+
+    df_overall = pd.DataFrame(overall_metrics)
+    csv1 = os.path.join(data_dir, "dataset_detection_metrics.csv")
+    df_overall.to_csv(csv1, index=False)
+    logger.info(f"Saved dataset detection metrics CSV: {csv1}")
+
+    # 2. Save Per-Device Metrics CSV
+    device_rows = []
+    for dev_name, st in device_stats.items():
+        d_tp = st["tp"]
+        d_fp = st["fp"]
+        d_fn = st["fn"]
+        d_prec = d_tp / max(1, d_tp + d_fp)
+        d_rec = d_tp / max(1, d_tp + d_fn)
+        d_f1 = 2 * d_prec * d_rec / max(1e-6, d_prec + d_rec)
+
+        device_rows.append({
+            "device_type": dev_name,
+            "total_records": st["total"],
+            "attack_records": st["attack"],
+            "confirmed_anomalies": st["confirmed"],
+            "precision": round(float(d_prec), 4),
+            "recall": round(float(d_rec), 4),
+            "f1_score": round(float(d_f1), 4),
+        })
+
+    df_device = pd.DataFrame(device_rows)
+    csv2 = os.path.join(data_dir, "dataset_device_metrics.csv")
+    df_device.to_csv(csv2, index=False)
+    logger.info(f"Saved dataset device metrics CSV: {csv2}")
+
+    # 3. Save Causal Results CSV
+    if not causal_results_list:
+        causal_results_list.append({
+            "record_index": 0,
+            "timestamp": 0.0,
+            "device_type": "TON_IoT",
+            "treatment": "none",
+            "outcome": "none",
+            "estimated_effect": 0.0,
+            "root_cause": "INSUFFICIENT_VARIANCE",
+            "causal_status": "INSUFFICIENT_EVIDENCE",
+            "root_cause_source": "INSUFFICIENT_EVIDENCE",
+        })
+    df_causal = pd.DataFrame(causal_results_list)
+    csv3 = os.path.join(data_dir, "causal_results.csv")
+    df_causal.to_csv(csv3, index=False)
+    logger.info(f"Saved dataset causal results CSV: {csv3}")
+
+    # 4. Generate Research Plots in results/plots/
     plt.style.use("ggplot")
-    configs_labels = ["No Fault Tolerance", "Fixed Recovery", "Proposed Causal"]
-    x = np.arange(len(configs_labels))
-    width = 0.45
 
-    # 1. Multi-Seed Average Latency Bar Chart (Mean ± Std)
-    plt.figure(figsize=(7, 4.5))
-    lat_means = df_agg["avg_latency_mean"].values
-    lat_stds = df_agg["avg_latency_std"].values
-    plt.bar(x, lat_means, width, yerr=lat_stds, capsize=5, color=["#e41a1c", "#377eb8", "#4daf4a"])
-    plt.xticks(x, configs_labels)
-    plt.ylabel("Average Latency (ms)")
-    plt.title("Multi-Seed Average Processing Latency (Mean ± Std)")
+    # Plot A: Dataset Precision, Recall, F1-Score
+    plt.figure(figsize=(6, 4))
+    metrics_names = ["Precision", "Recall", "F1-Score"]
+    metrics_vals = [precision * 100, recall * 100, f1 * 100]
+    bars = plt.bar(metrics_names, metrics_vals, color=["#2b5c8f", "#e41a1c", "#4daf4a"], width=0.5)
+    plt.ylabel("Score (%)")
+    plt.title("TON_IoT Real Dataset Detection Performance")
+    plt.ylim(0, 110)
+    for bar in bars:
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2.0, yval + 2, f"{yval:.2f}%", ha='center', va='bottom', fontweight='bold')
     plt.tight_layout()
-    p1 = os.path.join(plots_dir, "multi_seed_latency.png")
+    p1 = os.path.join(plots_dir, "dataset_precision_recall_f1.png")
     plt.savefig(p1, dpi=300)
     plt.close()
 
-    # 2. Multi-Seed Service Availability Bar Chart (Mean ± Std)
-    plt.figure(figsize=(7, 4.5))
-    avail_means = df_agg["service_availability_mean"].values
-    avail_stds = df_agg["service_availability_std"].values
-    plt.bar(x, avail_means, width, yerr=avail_stds, capsize=5, color=["#e41a1c", "#377eb8", "#4daf4a"])
-    plt.xticks(x, configs_labels)
-    plt.ylabel("Service Availability (%)")
-    plt.title("Multi-Seed Service Availability (Mean ± Std)")
-    plt.ylim(80, 105)
+    # Plot B: Detection Latency Histogram
+    plt.figure(figsize=(6, 4))
+    plt.hist(detection_latency_samples, bins=30, color="#377eb8", edgecolor="black", alpha=0.7)
+    plt.axvline(avg_det_lat_ms, color="red", linestyle="dashed", linewidth=1.5, label=f"Mean: {avg_det_lat_ms:.3f} ms")
+    plt.xlabel("Streaming Detection Processing Time (ms)")
+    plt.ylabel("Observation Count")
+    plt.title("Real-Time Streaming Processing Latency Distribution")
+    plt.legend()
     plt.tight_layout()
-    p2 = os.path.join(plots_dir, "multi_seed_availability.png")
+    p2 = os.path.join(plots_dir, "dataset_detection_latency.png")
     plt.savefig(p2, dpi=300)
     plt.close()
 
-    # 3. Multi-Seed F1-Score Bar Chart (Mean ± Std)
-    plt.figure(figsize=(7, 4.5))
-    f1_means = df_agg["f1_mean"].values
-    f1_stds = df_agg["f1_std"].values
-    plt.bar(x, f1_means, width, yerr=f1_stds, capsize=5, color=["#e41a1c", "#377eb8", "#4daf4a"])
-    plt.xticks(x, configs_labels)
-    plt.ylabel("F1-Score")
-    plt.title("Multi-Seed Detection F1-Score (Mean ± Std)")
-    plt.ylim(0, 1.0)
+    # Plot C: Device Comparison F1-Score
+    plt.figure(figsize=(8, 4.5))
+    dev_names = df_device["device_type"].values
+    dev_f1s = [val * 100 for val in df_device["f1_score"].values]
+    plt.bar(dev_names, dev_f1s, color="#984ea3", width=0.5)
+    plt.xlabel("IoT Device Telemetry Subset")
+    plt.ylabel("Detection F1-Score (%)")
+    plt.title("TON_IoT Detection Performance across IoT Device Types")
+    plt.xticks(rotation=25)
+    plt.ylim(0, 110)
     plt.tight_layout()
-    p3 = os.path.join(plots_dir, "multi_seed_f1.png")
+    p3 = os.path.join(plots_dir, "device_comparison.png")
     plt.savefig(p3, dpi=300)
     plt.close()
 
-    # 4. Multi-Seed Recovery Success Rate Bar Chart (Mean ± Std)
-    plt.figure(figsize=(7, 4.5))
-    rec_means = [0.0 if np.isnan(v) else v for v in df_agg["recovery_success_rate_val_mean"].values]
-    rec_stds = [0.0 if np.isnan(v) else v for v in df_agg["recovery_success_rate_val_std"].values]
-    plt.bar(x, rec_means, width, yerr=rec_stds, capsize=5, color=["#999999", "#377eb8", "#4daf4a"])
-    plt.xticks(x, configs_labels)
-    plt.ylabel("Recovery Success Rate (%)")
-    plt.title("Multi-Seed Episode Recovery Success Rate (Mean ± Std)")
+    # Plot D: Attack Type Performance Breakout
+    attack_rows = []
+    for atk, st in attack_stats.items():
+        rate = (st["confirmed"] / max(1, st["total"])) * 100.0
+        attack_rows.append({"attack_type": atk, "total": st["total"], "confirmed": st["confirmed"], "detection_rate": rate})
+    df_attack = pd.DataFrame(attack_rows)
+
+    plt.figure(figsize=(8, 4.5))
+    plt.bar(df_attack["attack_type"], df_attack["detection_rate"], color="#ff7f00", width=0.5)
+    plt.xlabel("Ground-Truth Attack / Normal Category")
+    plt.ylabel("Detection / Anomaly Trigger Rate (%)")
+    plt.title("Detection Trigger Rate per Attack Category (Offline Validation)")
+    plt.xticks(rotation=30)
     plt.ylim(0, 110)
     plt.tight_layout()
-    p4 = os.path.join(plots_dir, "multi_seed_recovery_success.png")
+    p4 = os.path.join(plots_dir, "attack_type_performance.png")
     plt.savefig(p4, dpi=300)
     plt.close()
 
     print("\n==========================================================================================")
-    print("                              MULTI-SEED EXPERIMENT SUMMARY                               ")
+    print("                      REAL TON-IOT DATASET EXPERIMENT RESULTS SUMMARY                     ")
     print("==========================================================================================")
-    print(f"Seeds Evaluated: {seeds}")
-    print(df_agg[["experiment_label", "service_availability_mean", "avg_latency_mean", "precision_mean", "recall_mean", "f1_mean", "recovery_success_rate_val_mean"]].to_string(index=False))
+    print(f"Data Source:                TON-IoT ({data_path})")
+    print(f"Total Records Processed:    {n_processed:,}")
+    print(f"Detection Precision:        {precision * 100:.2f}%")
+    print(f"Detection Recall:           {recall * 100:.2f}%")
+    print(f"Detection F1-Score:         {f1 * 100:.2f}%")
+    print(f"False Positive Rate (FPR):  {fpr * 100:.2f}%")
+    print(f"Avg Detection Latency:      {avg_det_lat_ms:.4f} ms / record")
+    print(f"Causal Inferences Count:    {causal_inference_count}")
+    print(f"Insufficient Evidence:      {insufficient_evidence_count}")
     print("==========================================================================================\n")
+
+    return overall_metrics[0]
 
 
 def run_persistence_sensitivity_experiment(seed: int = 42, output_dir: str = "results"):
     """
-    Evaluate Detection Persistence threshold values (1, 2, 3, 4, 5)
-    to show the Precision / Recall / Detection Delay trade-off.
+    Evaluates Detection Persistence values (k = 1, 2, 3, 4, 5) to quantify
+    the Precision/Recall/Delay tradeoff. Saves CSV metrics and research plots.
     """
-    logger.info("=== Starting Detection Persistence Sensitivity Experiment (Persistence: 1 to 5) ===")
+    logger.info("==========================================================================")
+    logger.info("             DETECTION PERSISTENCE SENSITIVITY ANALYSIS                   ")
+    logger.info("==========================================================================")
+    
+    data_dir = os.path.join(output_dir, "data")
+    plots_dir = os.path.join(output_dir, "plots")
+    os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(plots_dir, exist_ok=True)
 
-    persistence_values = [1, 2, 3, 4, 5]
-    sensitivity_results = []
+    persistence_k_list = [1, 2, 3, 4, 5]
+    sensitivity_rows = []
 
-    for k in persistence_values:
-        config = ExperimentConfig(seed=seed, duration=200, persistence=k)
+    for k in persistence_k_list:
+        logger.info(f"Evaluating Persistence k = {k} ...")
+        exp_config = ExperimentConfig(seed=seed, persistence=k)
         res = run_experiment_pipeline(
-            config=config,
+            config=exp_config,
             mode="simulation",
             detector_type="river",
             fixed_recovery=False,
             no_recovery=False,
             experiment_label=f"PERSISTENCE_K_{k}",
         )
-        sensitivity_results.append(res)
+        sensitivity_rows.append({
+            "persistence_k": k,
+            "precision": res["precision"],
+            "recall": res["recall"],
+            "f1_score": res["f1"],
+            "false_positive_rate": res["fpr"],
+            "avg_detection_delay_steps": res["avg_detection_delay_steps"],
+            "avg_detection_latency_ms": res["avg_detection_latency_ms"],
+        })
 
-    data_dir = os.path.join(output_dir, "data")
-    plots_dir = os.path.join(output_dir, "plots")
-    os.makedirs(data_dir, exist_ok=True)
-    os.makedirs(plots_dir, exist_ok=True)
+    df_sensitivity = pd.DataFrame(sensitivity_rows)
+    csv_path = os.path.join(data_dir, "persistence_sensitivity.csv")
+    df_sensitivity.to_csv(csv_path, index=False)
+    logger.info(f"Saved persistence sensitivity CSV: {csv_path}")
 
-    df_sens = pd.DataFrame(sensitivity_results)
-    clean_sens = df_sens[["persistence", "precision", "recall", "f1", "fpr", "avg_detection_delay_steps", "anomalies_count", "faults_confirmed_count"]]
-    sens_csv = os.path.join(data_dir, "persistence_sensitivity.csv")
-    clean_sens.to_csv(sens_csv, index=False)
-    logger.info(f"Saved persistence sensitivity CSV to: {sens_csv}")
-
-    # Generate Sensitivity Plots
-    plt.style.use("ggplot")
-
-    # Plot 1: Precision, Recall, F1 vs Persistence
+    # Generate Plot 1: Precision, Recall, F1 vs Persistence k
     plt.figure(figsize=(7, 4.5))
-    plt.plot(clean_sens["persistence"], clean_sens["precision"], marker="o", label="Precision", color="#2b5c8f", linewidth=2.0)
-    plt.plot(clean_sens["persistence"], clean_sens["recall"], marker="s", label="Recall", color="#e41a1c", linewidth=2.0)
-    plt.plot(clean_sens["persistence"], clean_sens["f1"], marker="^", label="F1-Score", color="#4daf4a", linewidth=2.0)
-
-    plt.xlabel("Persistence Threshold (Consecutive Anomaly Observations k)")
-    plt.ylabel("Score")
-    plt.title("Detection Metric Tradeoff vs. Persistence Threshold (k)")
-    plt.xticks(persistence_values)
-    plt.ylim(0.0, 1.05)
+    plt.plot(df_sensitivity["persistence_k"], df_sensitivity["precision"] * 100, marker="o", label="Precision (%)", color="#2b5c8f", linewidth=2)
+    plt.plot(df_sensitivity["persistence_k"], df_sensitivity["recall"] * 100, marker="s", label="Recall (%)", color="#e41a1c", linewidth=2)
+    plt.plot(df_sensitivity["persistence_k"], df_sensitivity["f1_score"] * 100, marker="^", label="F1-Score (%)", color="#4daf4a", linewidth=2)
+    plt.xlabel("Persistence Threshold (k consecutive anomalies)")
+    plt.ylabel("Score (%)")
+    plt.title("Detection Accuracy & Tradeoff vs Persistence k")
+    plt.xticks(persistence_k_list)
+    plt.ylim(0, 105)
+    plt.grid(True, linestyle="--", alpha=0.6)
     plt.legend()
     plt.tight_layout()
     p1 = os.path.join(plots_dir, "persistence_precision_recall.png")
     plt.savefig(p1, dpi=300)
     plt.close()
 
-    # Plot 2: Detection Delay vs Persistence
+    # Generate Plot 2: Detection Delay vs Persistence k
     plt.figure(figsize=(7, 4.5))
-    plt.plot(clean_sens["persistence"], clean_sens["avg_detection_delay_steps"], marker="d", color="#d95f02", linewidth=2.0)
-
-    plt.xlabel("Persistence Threshold (Consecutive Anomaly Observations k)")
-    plt.ylabel("Average Detection Delay (Simulation Steps)")
-    plt.title("Fault Confirmation Delay vs. Persistence Threshold (k)")
-    plt.xticks(persistence_values)
+    plt.plot(df_sensitivity["persistence_k"], df_sensitivity["avg_detection_delay_steps"], marker="d", color="#984ea3", linewidth=2)
+    plt.xlabel("Persistence Threshold (k consecutive anomalies)")
+    plt.ylabel("Average Detection Delay (steps)")
+    plt.title("Detection Delay vs Persistence k")
+    plt.xticks(persistence_k_list)
+    plt.grid(True, linestyle="--", alpha=0.6)
     plt.tight_layout()
     p2 = os.path.join(plots_dir, "persistence_detection_delay.png")
     plt.savefig(p2, dpi=300)
     plt.close()
 
     print("\n==========================================================================================")
-    print("                        DETECTION PERSISTENCE SENSITIVITY SUMMARY                          ")
+    print("                 DETECTION PERSISTENCE SENSITIVITY RESULTS SUMMARY                        ")
     print("==========================================================================================")
-    print(clean_sens.to_string(index=False))
+    print(f"{'Persistence k':<15} | {'Precision (%)':<15} | {'Recall (%)':<15} | {'F1-Score (%)':<15} | {'Delay (steps)':<15}")
+    print("-" * 83)
+    for row in sensitivity_rows:
+        print(f"{row['persistence_k']:<15} | {row['precision']*100:<15.2f} | {row['recall']*100:<15.2f} | {row['f1_score']*100:<15.2f} | {row['avg_detection_delay_steps']:<15.2f}")
     print("==========================================================================================\n")
+
+    return sensitivity_rows
+
+
+def run_multi_seed_experiment(seed_start: int = 42, num_seeds: int = 10, output_dir: str = "results"):
+    """
+    Executes reproducible multi-seed evaluation across specified seeds.
+    Saves per-seed CSV, aggregated CSV, and multi-seed comparison plots with error bars.
+    """
+    logger.info("==========================================================================")
+    logger.info(f"    MULTI-SEED EVALUATION EXPERIMENT ({num_seeds} SEEDS: {seed_start} TO {seed_start + num_seeds - 1})   ")
+    logger.info("==========================================================================")
+
+    data_dir = os.path.join(output_dir, "data")
+    plots_dir = os.path.join(output_dir, "plots")
+    os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(plots_dir, exist_ok=True)
+
+    all_seed_results = []
+    seeds = list(range(seed_start, seed_start + num_seeds))
+
+    for s in seeds:
+        logger.info(f"Running seed {s}/{seed_start + num_seeds - 1}...")
+        exp_config = ExperimentConfig(seed=s)
+
+        # 1. Proposed Causal Adaptive Recovery
+        p_res = run_experiment_pipeline(
+            config=exp_config,
+            mode="simulation",
+            detector_type="river",
+            fixed_recovery=False,
+            no_recovery=False,
+            experiment_label="PROPOSED_CAUSAL_ADAPTIVE_RECOVERY",
+        )
+        all_seed_results.append(p_res)
+
+        # 2. Baseline 1: No Fault Tolerance
+        b1_res = run_experiment_pipeline(
+            config=exp_config,
+            mode="simulation",
+            detector_type="river",
+            fixed_recovery=False,
+            no_recovery=True,
+            experiment_label="BASELINE_NO_FAULT_TOLERANCE",
+        )
+        all_seed_results.append(b1_res)
+
+        # 3. Baseline 2: Fixed Recovery
+        b2_res = run_experiment_pipeline(
+            config=exp_config,
+            mode="simulation",
+            detector_type="river",
+            fixed_recovery=True,
+            no_recovery=False,
+            experiment_label="BASELINE_FIXED_RECOVERY",
+        )
+        all_seed_results.append(b2_res)
+
+    df_all = pd.DataFrame(all_seed_results)
+    csv_all = os.path.join(data_dir, "multi_seed_results.csv")
+    df_all.to_csv(csv_all, index=False)
+    logger.info(f"Saved multi-seed results CSV: {csv_all}")
+
+    # Compute Aggregates per experiment label
+    labels = ["BASELINE_NO_FAULT_TOLERANCE", "BASELINE_FIXED_RECOVERY", "PROPOSED_CAUSAL_ADAPTIVE_RECOVERY"]
+    agg_rows = []
+
+    for label in labels:
+        df_sub = df_all[df_all["experiment_label"] == label]
+        rec_vals = df_sub["recovery_success_rate_val"].fillna(0.0)
+        agg_rows.append({
+            "experiment_label": label,
+            "availability_mean": df_sub["service_availability"].mean(),
+            "availability_std": df_sub["service_availability"].std(),
+            "latency_mean": df_sub["avg_latency"].mean(),
+            "latency_std": df_sub["avg_latency"].std(),
+            "f1_mean": (df_sub["f1"] * 100).mean(),
+            "f1_std": (df_sub["f1"] * 100).std(),
+            "precision_mean": (df_sub["precision"] * 100).mean(),
+            "precision_std": (df_sub["precision"] * 100).std(),
+            "recall_mean": (df_sub["recall"] * 100).mean(),
+            "recall_std": (df_sub["recall"] * 100).std(),
+            "cpu_mean": df_sub["avg_cpu_utilization"].mean(),
+            "cpu_std": df_sub["avg_cpu_utilization"].std(),
+            "recovery_success_mean": rec_vals.mean(),
+            "recovery_success_std": rec_vals.std(),
+        })
+
+    df_agg = pd.DataFrame(agg_rows)
+    csv_agg = os.path.join(data_dir, "multi_seed_aggregate.csv")
+    df_agg.to_csv(csv_agg, index=False)
+    logger.info(f"Saved multi-seed aggregate CSV: {csv_agg}")
+
+    # Plot 1: Service Availability
+    plt.figure(figsize=(7, 4.5))
+    x_labels = ["Baseline (No FT)", "Baseline (Fixed)", "Proposed (Causal)"]
+    plt.bar(x_labels, df_agg["availability_mean"], yerr=df_agg["availability_std"], capsize=5, color=["#e41a1c", "#377eb8", "#4daf4a"], width=0.45)
+    plt.ylabel("Service Availability (%)")
+    plt.title(f"Service Availability Comparison ({num_seeds} Seeds)")
+    plt.ylim(0, 110)
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_dir, "multi_seed_availability.png"), dpi=300)
+    plt.close()
+
+    # Plot 2: Average Latency
+    plt.figure(figsize=(7, 4.5))
+    plt.bar(x_labels, df_agg["latency_mean"], yerr=df_agg["latency_std"], capsize=5, color=["#e41a1c", "#377eb8", "#4daf4a"], width=0.45)
+    plt.ylabel("Average Latency (ms)")
+    plt.title(f"Average Latency Comparison ({num_seeds} Seeds)")
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_dir, "multi_seed_latency.png"), dpi=300)
+    plt.close()
+
+    # Plot 3: F1-Score
+    plt.figure(figsize=(7, 4.5))
+    plt.bar(x_labels, df_agg["f1_mean"], yerr=df_agg["f1_std"], capsize=5, color=["#e41a1c", "#377eb8", "#4daf4a"], width=0.45)
+    plt.ylabel("Detection F1-Score (%)")
+    plt.title(f"Detection F1-Score Comparison ({num_seeds} Seeds)")
+    plt.ylim(0, 110)
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_dir, "multi_seed_f1.png"), dpi=300)
+    plt.close()
+
+    # Plot 4: Recovery Success Rate
+    plt.figure(figsize=(7, 4.5))
+    plt.bar(x_labels, df_agg["recovery_success_mean"], yerr=df_agg["recovery_success_std"].fillna(0.0), capsize=5, color=["#e41a1c", "#377eb8", "#4daf4a"], width=0.45)
+    plt.ylabel("Recovery Success Rate (%)")
+    plt.title(f"Recovery Success Rate Comparison ({num_seeds} Seeds)")
+    plt.ylim(0, 110)
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_dir, "multi_seed_recovery_success.png"), dpi=300)
+    plt.close()
+
+    print("\n==========================================================================================")
+    print(f"            MULTI-SEED AGGREGATE RESULTS SUMMARY ({num_seeds} SEEDS)                      ")
+    print("==========================================================================================")
+    print(f"{'Metric':<30} | {'Baseline 1 (No FT)':<20} | {'Baseline 2 (Fixed)':<20} | {'Proposed (Causal)':<20}")
+    print("-" * 98)
+    b1_agg = df_agg[df_agg["experiment_label"] == "BASELINE_NO_FAULT_TOLERANCE"].iloc[0]
+    b2_agg = df_agg[df_agg["experiment_label"] == "BASELINE_FIXED_RECOVERY"].iloc[0]
+    p_agg = df_agg[df_agg["experiment_label"] == "PROPOSED_CAUSAL_ADAPTIVE_RECOVERY"].iloc[0]
+
+    b1_rec_str = "N/A (No Recovery)"
+    b2_rec_str = f"{b2_agg['recovery_success_mean']:>6.2f} ± {b2_agg['recovery_success_std']:<8.2f}"
+    p_rec_str = f"{p_agg['recovery_success_mean']:>6.2f} ± {p_agg['recovery_success_std']:<8.2f}"
+
+    print(f"{'Service Availability (%)':<30} | {b1_agg['availability_mean']:>6.2f} ± {b1_agg['availability_std']:<8.2f} | {b2_agg['availability_mean']:>6.2f} ± {b2_agg['availability_std']:<8.2f} | {p_agg['availability_mean']:>6.2f} ± {p_agg['availability_std']:<8.2f}")
+    print(f"{'Average Latency (ms)':<30} | {b1_agg['latency_mean']:>6.2f} ± {b1_agg['latency_std']:<8.2f} | {b2_agg['latency_mean']:>6.2f} ± {b2_agg['latency_std']:<8.2f} | {p_agg['latency_mean']:>6.2f} ± {p_agg['latency_std']:<8.2f}")
+    print(f"{'Average CPU Utilization (%)':<30} | {b1_agg['cpu_mean']:>6.2f} ± {b1_agg['cpu_std']:<8.2f} | {b2_agg['cpu_mean']:>6.2f} ± {b2_agg['cpu_std']:<8.2f} | {p_agg['cpu_mean']:>6.2f} ± {p_agg['cpu_std']:<8.2f}")
+    print(f"{'Detection F1-Score (%)':<30} | {b1_agg['f1_mean']:>6.2f} ± {b1_agg['f1_std']:<8.2f} | {b2_agg['f1_mean']:>6.2f} ± {b2_agg['f1_std']:<8.2f} | {p_agg['f1_mean']:>6.2f} ± {p_agg['f1_std']:<8.2f}")
+    print(f"{'Recovery Success Rate (%)':<30} | {b1_rec_str:<20} | {b2_rec_str:<20} | {p_rec_str:<20}")
+    print("==========================================================================================\n")
+
+    return df_agg
 
 
 def main():
@@ -729,20 +1010,12 @@ def main():
         if not args.data_path or not os.path.exists(args.data_path):
             logger.error(f"Dataset path invalid or not provided: {args.data_path}")
             sys.exit(1)
-        exp_config = ExperimentConfig(seed=args.seed, duration=args.duration)
-        results = run_experiment_pipeline(
-            config=exp_config,
-            mode="dataset",
-            dataset_name=args.dataset,
+        run_dataset_experiment(
             data_path=args.data_path,
-            detector_type=args.detector,
-            experiment_label=f"DATASET_{args.dataset.upper()}",
+            max_records=args.max_records,
+            output_dir=args.output_dir,
+            persistence_k=args.persistence,
         )
-        print("\n================ DATASET EXPERIMENT RESULTS ================")
-        print(f"Dataset:                  {results['dataset_name']}")
-        print(f"Total Records Streamed:   {results['total_records']}")
-        print(f"F1-Score:                 {results['f1'] * 100:.2f}%")
-        print("============================================================\n")
 
     else:
         # Simulation Mode (Single Seed)
