@@ -1,15 +1,13 @@
-"""
-Adaptive Recovery Manager.
-
-Maps identified root causes and system metrics to adaptive recovery actions:
-    - WORKLOAD_REDISTRIBUTION
-    - TASK_MIGRATION
-    - TRAFFIC_REROUTING
-    - EDGE_NODE_FAILOVER
-    - RESOURCE_REBALANCING
-
-Includes fault-episode level quantitative recovery validation.
-"""
+# Adaptive Recovery Manager.
+#
+# Maps identified root causes and system metrics to adaptive recovery actions:
+#     - WORKLOAD_REDISTRIBUTION
+#     - TASK_MIGRATION
+#     - TRAFFIC_REROUTING
+#     - EDGE_NODE_FAILOVER
+#     - RESOURCE_REBALANCING
+#
+# Includes fault-episode level quantitative recovery validation.
 
 from dataclasses import dataclass, field, asdict
 import logging
@@ -21,9 +19,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class RecoveryDecision:
-    """
-    Metadata recording an adaptive recovery decision.
-    """
+    # Metadata recording an adaptive recovery decision.
     target_node_id: str
     fault_type: str
     root_cause: str
@@ -40,9 +36,7 @@ class RecoveryDecision:
 
 @dataclass
 class FaultEpisode:
-    """
-    Episode-level recovery evaluation record for a discrete fault instance.
-    """
+    # Episode-level recovery evaluation record for a discrete fault instance.
     episode_id: str
     fault_type: str
     affected_node: str
@@ -62,9 +56,7 @@ class FaultEpisode:
 
 
 class RecoveryManager:
-    """
-    Adaptive Recovery Decision and Execution Engine.
-    """
+    # Adaptive Recovery Decision and Execution Engine.
 
     def __init__(self):
         # Action mappings based on cause and system state
@@ -89,10 +81,8 @@ class RecoveryManager:
         root_cause_source: str = "DOWHY_CAUSAL_INFERENCE",
         fixed_recovery: bool = False,
     ) -> RecoveryDecision:
-        """
-        Select optimal recovery action based on root cause, telemetry metrics, and severity.
-        If fixed_recovery=True (for BASELINE_FIXED_RECOVERY comparison), returns a fixed static action.
-        """
+        # Select optimal recovery action based on root cause, telemetry metrics, and severity.
+        # If fixed_recovery=True (for BASELINE_FIXED_RECOVERY comparison), returns a fixed static action.
         node_id = record.edge_node_id
         timestamp = record.timestamp
         fault_type = record.fault_type or "UNKNOWN"
@@ -145,10 +135,9 @@ class RecoveryManager:
         decision: RecoveryDecision,
         simulation,
     ) -> Dict[str, Any]:
-        """
-        Execute physical recovery action inside SimPy simulation environment.
-        Quantitatively measures before/after physical metric improvements.
-        """
+        # Execute physical recovery action inside SimPy simulation environment.
+        # Quantitatively measures before/after physical metric improvements.
+
         node_id = decision.target_node_id
         node = simulation.nodes.get(node_id, None)
 

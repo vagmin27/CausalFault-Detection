@@ -1,11 +1,9 @@
-"""
-Common Telemetry Record and Data Source Interface.
-
-This module defines the unified TelemetryRecord class and DataSource interface.
-All simulation data and real-world dataset feeds are converted into TelemetryRecord
-instances so downstream components (Detector, Causal Analyzer, Recovery Manager, Evaluator)
-remain completely decoupled from data source schemas.
-"""
+# Common Telemetry Record and Data Source Interface.
+#
+# This module defines the unified TelemetryRecord class and DataSource interface.
+# All simulation data and real-world dataset feeds are converted into TelemetryRecord
+# instances so downstream components (Detector, Causal Analyzer, Recovery Manager, Evaluator)
+# remain completely decoupled from data source schemas.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, asdict
@@ -14,12 +12,10 @@ from typing import Dict, Any, Optional, List, Generator
 
 @dataclass
 class TelemetryRecord:
-    """
-    Standardized Telemetry Record representation.
-    
-    Fields marked Optional may be None if a specific dataset does not collect
-    or provide that telemetry dimension.
-    """
+    # Standardized Telemetry Record representation.
+    #
+    # Fields marked Optional may be None if a specific dataset does not collect
+    # or provide that telemetry dimension.
     timestamp: float
     device_id: str
     edge_node_id: str
@@ -40,16 +36,14 @@ class TelemetryRecord:
     raw_features: Dict[str, Any] = field(default_factory=dict) # Raw sensor payload key-values
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert record to dictionary representation."""
+        # Convert record to dictionary representation.
         d = asdict(self)
         return d
 
     def get_available_features(self) -> Dict[str, float]:
-        """
-        Extract numerical telemetry feature dimensions that are not None.
-        Returns a dictionary of feature_name -> float value.
-        Includes numerical raw sensor features when available.
-        """
+        # Extract numerical telemetry feature dimensions that are not None.
+        # Returns a dictionary of feature_name -> float value.
+        # Includes numerical raw sensor features when available.
         features = {
             "cpu_utilization": self.cpu_utilization,
             "memory_utilization": self.memory_utilization,
@@ -67,15 +61,11 @@ class TelemetryRecord:
         return res
 
     def get_numeric_features(self) -> Dict[str, float]:
-        """
-        Get all numerical telemetry metrics available in record.
-        """
+        # Get all numerical telemetry metrics available in record.
         return self.get_available_features()
 
     def to_feature_vector(self, feature_order: Optional[List[str]] = None) -> List[float]:
-        """
-        Convert available numerical features to a flat feature vector for ML models.
-        """
+        # Convert available numerical features to a flat feature vector for ML models.
         if feature_order is None:
             feature_order = [
                 "cpu_utilization",
@@ -98,7 +88,7 @@ class TelemetryRecord:
 
     @classmethod
     def get_feature_names(cls) -> List[str]:
-        """Get standard list of numerical telemetry feature names."""
+        # Get standard list of numerical telemetry feature names.
         return [
             "cpu_utilization",
             "memory_utilization",
@@ -111,16 +101,16 @@ class TelemetryRecord:
 
 
 class DataSource(ABC):
-    """
-    Abstract Interface for Telemetry Data Sources.
-    """
+    # Abstract Interface for Telemetry Data Sources.
 
     @abstractmethod
     def stream_telemetry(self) -> Generator[TelemetryRecord, None, None]:
-        """Yield TelemetryRecord instances sequentially (streaming)."""
+        # Yield TelemetryRecord instances sequentially (streaming).
         pass
 
     @abstractmethod
     def get_dataset_name(self) -> str:
-        """Return human-readable identifier of the data source."""
+        # Return human-readable identifier of the data source.
         pass
+
+

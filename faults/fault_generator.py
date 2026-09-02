@@ -1,9 +1,7 @@
-"""
-Fault Injection Generator.
-
-Manages scheduled, random, and configured fault injection into the simulation
-with full random seed reproducibility.
-"""
+# Fault Injection Generator.
+#
+# Manages scheduled, random, and configured fault injection into the simulation
+# with full random seed reproducibility.
 
 import random
 import logging
@@ -14,9 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class FaultGenerator:
-    """
-    Fault Injection Orchestrator.
-    """
+    # Fault Injection Orchestrator.
 
     def __init__(self, seed: int = 42):
         self.seed = seed
@@ -35,7 +31,7 @@ class FaultGenerator:
         duration: float,
         severity: float = 1.0,
     ) -> FaultRecord:
-        """Schedule a controlled fault at a precise timestamp."""
+        # Schedule a controlled fault at a precise timestamp.
         record = FaultRecord(
             fault_type=fault_type,
             target_node_id=target_node_id,
@@ -58,9 +54,7 @@ class FaultGenerator:
         min_duration: float = 15.0,
         max_duration: float = 30.0,
     ) -> List[FaultRecord]:
-        """
-        Generate reproducible random fault injection schedule.
-        """
+        # Generate reproducible random fault injection schedule.
         random.seed(self.seed)
         fault_list = list(FaultType)
         generated = []
@@ -89,9 +83,8 @@ class FaultGenerator:
         return generated
 
     def update_simulation_faults(self, current_time: float, simulation) -> List[FaultRecord]:
-        """
-        Check scheduled faults against current simulation timestamp and inject/clear state.
-        """
+        # Check scheduled faults against current simulation timestamp and inject/clear state.
+
         active_now = []
         for fault in self.scheduled_faults:
             if fault.is_active_at(current_time):

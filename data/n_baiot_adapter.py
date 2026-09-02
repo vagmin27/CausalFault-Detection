@@ -1,13 +1,11 @@
-"""
-N-BaIoT Dataset Adapter.
-
-N-BaIoT is a benchmark generalization dataset containing IoT botnet attack telemetry
-captured across commercial IoT devices (cameras, doorbells, sensors).
-
-Dataset Adapter Policy:
-If the dataset file is not present at --data-path, a clear FileNotFoundError is raised
-directing the user to provide the valid dataset file path.
-"""
+# N-BaIoT Dataset Adapter.
+#
+# N-BaIoT is a benchmark generalization dataset containing IoT botnet attack telemetry
+# captured across commercial IoT devices (cameras, doorbells, sensors).
+#
+# Dataset Adapter Policy:
+# If the dataset file is not present at --data-path, a clear FileNotFoundError is raised
+# directing the user to provide the valid dataset file path.
 
 import os
 import pandas as pd
@@ -19,9 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class NBaIoTAdapter(DataSource):
-    """
-    Adapter for streaming telemetry observations from N-BaIoT dataset CSV files.
-    """
+    # Adapter for streaming telemetry observations from N-BaIoT dataset CSV files.
 
     def __init__(self, data_path: Optional[str] = None):
         self.data_path = data_path
@@ -50,10 +46,8 @@ class NBaIoTAdapter(DataSource):
             raise e
 
     def _map_row_to_record(self, idx: int, row: pd.Series) -> TelemetryRecord:
-        """
-        Map N-BaIoT extracted statistical features (MI, HH, HpH stream features)
-        to TelemetryRecord metrics.
-        """
+        # Map N-BaIoT extracted statistical features (MI, HH, HpH stream features)
+        # to TelemetryRecord metrics.
         # N-BaIoT features include packet arrival rates, jitter, sizes across time windows
         # e.g., MI_dir_L5_weight, MI_dir_L5_mean, HH_L5_magnitude, etc.
         ts = float(idx)
@@ -91,3 +85,4 @@ class NBaIoTAdapter(DataSource):
             fault_type="BOTNET_ANOMALY" if fault_label == 1 else "NONE",
             original_label=orig_label,
         )
+

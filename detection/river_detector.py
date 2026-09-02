@@ -1,14 +1,12 @@
-"""
-River Online Streaming Anomaly Detector.
-
-Uses River 0.26.1 `anomaly.HalfSpaceTrees` algorithm for real-time online
-anomaly/fault scoring on streaming TelemetryRecord instances.
-
-Sequential streaming architecture:
-    Record 1 -> score_one -> learn_one
-    Record 2 -> score_one -> learn_one
-    Record 3 -> score_one -> learn_one
-"""
+# River Online Streaming Anomaly Detector.
+#
+# Uses River 0.26.1 `anomaly.HalfSpaceTrees` algorithm for real-time online
+# anomaly/fault scoring on streaming TelemetryRecord instances.
+#
+# Sequential streaming architecture:
+#     Record 1 -> score_one -> learn_one
+#     Record 2 -> score_one -> learn_one
+#     Record 3 -> score_one -> learn_one
 
 import logging
 from typing import Dict, Any, List, Optional
@@ -20,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class RiverFaultDetector:
-    """
-    Online streaming fault detector powered by River's Half-Space Trees.
-    """
+    # Online streaming fault detector powered by River's Half-Space Trees.
 
     def __init__(
         self,
@@ -50,14 +46,13 @@ class RiverFaultDetector:
         self.score_history: List[float] = []
 
     def process_record(self, record: TelemetryRecord) -> Dict[str, Any]:
-        """
-        Process a single TelemetryRecord observation sequentially.
-        1. Extract feature dictionary
-        2. Compute streaming anomaly score using score_one()
-        3. Update streaming model using learn_one()
-        4. Determine is_fault threshold decision
-        """
+        # Process a single TelemetryRecord observation sequentially.
+        # 1. Extract feature dictionary
+        # 2. Compute streaming anomaly score using score_one()
+        # 3. Update streaming model using learn_one()
+        # 4. Determine is_fault threshold decision
         x = record.get_available_features()
+
 
         # Score observation before updating (unseen streaming evaluation)
         raw_score = self.model.score_one(x)

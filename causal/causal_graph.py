@@ -1,19 +1,17 @@
-"""
-System Causal Graph Specification.
-
-Builds NetworkX Directed Acyclic Graphs (DAGs) representing physical dependency
-and domain causal mechanisms in Edge-IoT architectures:
-
-1. Simulation Graph:
-    Workload -> CPU Utilization -> Latency
-    Workload -> Memory Utilization -> Latency
-    Network Utilization -> Packet Loss -> Latency
-
-2. Sensor-Level Dataset Graphs (TON_IoT Domain Mechanisms):
-    Weather: Temperature -> Humidity, Temperature -> Pressure
-    Motion: Motion Status -> Light Status
-    Fridge: Fridge Temperature -> Temperature Condition
-"""
+# System Causal Graph Specification.
+#
+# Builds NetworkX Directed Acyclic Graphs (DAGs) representing physical dependency
+# and domain causal mechanisms in Edge-IoT architectures:
+#
+# 1. Simulation Graph:
+#     Workload -> CPU Utilization -> Latency
+#     Workload -> Memory Utilization -> Latency
+#     Network Utilization -> Packet Loss -> Latency
+#
+# 2. Sensor-Level Dataset Graphs (TON_IoT Domain Mechanisms):
+#     Weather: Temperature -> Humidity, Temperature -> Pressure
+#     Motion: Motion Status -> Light Status
+#     Fridge: Fridge Temperature -> Temperature Condition
 
 import networkx as nx
 import logging
@@ -23,10 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 class SystemCausalGraph:
-    """
-    NetworkX Causal System Graph representing domain structure and causal assumptions.
-    Supports both simulation system graphs and sensor dataset domain graphs.
-    """
+    # NetworkX Causal System Graph representing domain structure and causal assumptions.
+    # Supports both simulation system graphs and sensor dataset domain graphs.
 
     def __init__(self, mode: str = "simulation", device_type: Optional[str] = None):
         self.mode = mode
@@ -41,12 +37,10 @@ class SystemCausalGraph:
             self._build_simulation_graph()
 
     def _build_simulation_graph(self):
-        """
-        Construct simulation domain causal relationships:
-            Workload -> CPU Utilization -> Latency
-            Workload -> Memory Utilization -> Latency
-            Network Utilization -> Packet Loss -> Latency
-        """
+        # Construct simulation domain causal relationships:
+        #     Workload -> CPU Utilization -> Latency
+        #     Workload -> Memory Utilization -> Latency
+        #     Network Utilization -> Packet Loss -> Latency
         edges = [
             ("workload", "cpu_utilization"),
             ("workload", "memory_utilization"),
@@ -61,9 +55,7 @@ class SystemCausalGraph:
                     self.graph.number_of_nodes(), self.graph.number_of_edges())
 
     def _build_dataset_graph(self):
-        """
-        Construct domain-defined causal relationships for TON_IoT sensor telemetry.
-        """
+        # Construct domain-defined causal relationships for TON_IoT sensor telemetry.
         edges = []
         dev = str(self.device_type or "").lower()
 
@@ -101,7 +93,7 @@ class SystemCausalGraph:
         return self.graph
 
     def get_candidate_treatments(self) -> List[str]:
-        """Return potential root-cause treatment variables in the DAG."""
+        # Return potential root-cause treatment variables in the DAG.
         if self.mode == "dataset":
             return list(self.graph.nodes())
         return [
@@ -111,3 +103,4 @@ class SystemCausalGraph:
             "packet_loss",
             "latency",
         ]
+

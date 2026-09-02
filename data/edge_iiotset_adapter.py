@@ -1,13 +1,11 @@
-"""
-Edge-IIoTset Dataset Adapter.
-
-Edge-IIoTset is a primary Edge-IIoT validation dataset containing cyber-physical
-system telemetry and attack vectors across multi-layer Edge-IoT architectures.
-
-Dataset Adapter Policy:
-If the dataset file is not present at --data-path, a clear FileNotFoundError is raised
-directing the user to provide the valid dataset file path.
-"""
+# Edge-IIoTset Dataset Adapter.
+#
+# Edge-IIoTset is a primary Edge-IIoT validation dataset containing cyber-physical
+# system telemetry and attack vectors across multi-layer Edge-IoT architectures.
+#
+# Dataset Adapter Policy:
+# If the dataset file is not present at --data-path, a clear FileNotFoundError is raised
+# directing the user to provide the valid dataset file path.
 
 import os
 import pandas as pd
@@ -19,9 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class EdgeIIoTsetAdapter(DataSource):
-    """
-    Adapter for streaming telemetry observations from Edge-IIoTset dataset files.
-    """
+    # Adapter for streaming telemetry observations from Edge-IIoTset dataset files.
 
     def __init__(self, data_path: Optional[str] = None):
         self.data_path = data_path
@@ -50,9 +46,7 @@ class EdgeIIoTsetAdapter(DataSource):
             raise e
 
     def _map_row_to_record(self, idx: int, row: pd.Series) -> TelemetryRecord:
-        """
-        Map Edge-IIoTset row fields to unified TelemetryRecord format.
-        """
+        # Map Edge-IIoTset row fields to unified TelemetryRecord format.
         ts = float(row.get("frame.time_epoch", idx))
         dev_id = str(row.get("ip.src_host", row.get("src_ip", "IIoT_Device_1")))
         edge_id = str(row.get("ip.dst_host", row.get("dst_ip", "IIoT_Edge_1")))
@@ -86,3 +80,4 @@ class EdgeIIoTsetAdapter(DataSource):
             fault_type="CYBER_PHYSICAL_ATTACK" if fault_label == 1 else "NONE",
             original_label=orig_label,
         )
+

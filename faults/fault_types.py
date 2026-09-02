@@ -1,9 +1,7 @@
-"""
-Fault Types and Fault Injection Specifications.
-
-Defines standard fault categories (CPU overload, Memory pressure, Network congestion,
-High latency, Packet loss, Node crash failure) and recorded fault metadata.
-"""
+# Fault Types and Fault Injection Specifications.
+#
+# Defines standard fault categories (CPU overload, Memory pressure, Network congestion,
+# High latency, Packet loss, Node crash failure) and recorded fault metadata.
 
 from enum import Enum
 from dataclasses import dataclass
@@ -28,9 +26,7 @@ class FaultType(Enum):
 
 @dataclass
 class FaultRecord:
-    """
-    Metadata recording an injected fault event.
-    """
+    # Metadata recording an injected fault event.
     fault_type: FaultType
     target_node_id: str
     start_time: float
@@ -39,8 +35,9 @@ class FaultRecord:
     active: bool = False
 
     def is_active_at(self, current_time: float) -> bool:
-        """Check if fault is active at given timestamp."""
+        # Check if fault is active at given timestamp.
         return self.start_time <= current_time < (self.start_time + self.duration)
+
 
     def to_dict(self) -> Dict[str, Any]:
         return {

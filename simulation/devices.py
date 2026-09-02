@@ -1,8 +1,6 @@
-"""
-IoT Devices Simulation Model.
-
-Defines diverse IoT device types and their workload generation characteristics.
-"""
+# IoT Devices Simulation Model.
+#
+# Defines diverse IoT device types and their workload generation characteristics.
 
 from enum import Enum
 import random
@@ -17,9 +15,7 @@ class DeviceType(Enum):
 
 
 class IoTDevice:
-    """
-    Simulated IoT device producing data traffic directed to an Edge Node.
-    """
+    # Simulated IoT device producing data traffic directed to an Edge Node.
 
     def __init__(
         self,
@@ -34,11 +30,10 @@ class IoTDevice:
         self.base_rate = base_rate  # requests / sec or packet rate
 
     def generate_workload(self, sim_time: float) -> float:
-        """
-        Generate active workload (requests/sec) at given simulation timestamp.
-        Modulates workload based on device type.
-        """
+        # Generate active workload (requests/sec) at given simulation timestamp.
+        # Modulates workload based on device type.
         noise = random.uniform(0.9, 1.1)
+
 
         if self.device_type == DeviceType.SENSOR:
             # Low rate periodic stream

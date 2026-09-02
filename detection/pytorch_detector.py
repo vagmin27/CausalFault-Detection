@@ -1,9 +1,7 @@
-"""
-PyTorch Telemetry Autoencoder Anomaly Detector.
-
-Implements an Autoencoder neural network for real-time anomaly detection based on
-reconstruction error. Features separate training (offline baseline) and inference phases.
-"""
+# PyTorch Telemetry Autoencoder Anomaly Detector.
+#
+# Implements an Autoencoder neural network for real-time anomaly detection based on
+# reconstruction error. Features separate training (offline baseline) and inference phases.
 
 import os
 import logging
@@ -21,9 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class TelemetryAutoencoder(nn.Module):
-    """
-    Symmetric Autoencoder Neural Network.
-    """
+    # Symmetric Autoencoder Neural Network.
 
     def __init__(self, input_dim: int = 7, latent_dim: int = 3):
         super(TelemetryAutoencoder, self).__init__()
@@ -46,10 +42,8 @@ class TelemetryAutoencoder(nn.Module):
 
 
 class PyTorchFaultDetector:
-    """
-    PyTorch Anomaly Detector wrapping TelemetryAutoencoder with model persistence
-    and real-time streaming inference.
-    """
+    # PyTorch Anomaly Detector wrapping TelemetryAutoencoder with model persistence
+    # and real-time streaming inference.
 
     def __init__(
         self,
@@ -76,9 +70,7 @@ class PyTorchFaultDetector:
         epochs: int = 40,
         batch_size: int = 16,
     ):
-        """
-        Train Autoencoder on normal baseline telemetry records.
-        """
+        # Train Autoencoder on normal baseline telemetry records.
         # Filter for normal records if label available
         normal_recs = [r for r in records if r.fault_label == 0]
         if not normal_recs:
@@ -113,10 +105,8 @@ class PyTorchFaultDetector:
         logger.info("PyTorch Autoencoder training complete.")
 
     def process_record(self, record: TelemetryRecord) -> Dict[str, Any]:
-        """
-        Perform real-time inference on a single TelemetryRecord.
-        Calculate reconstruction MSE error.
-        """
+        # Perform real-time inference on a single TelemetryRecord.
+        # Calculate reconstruction MSE error.
         if not self.is_trained:
             # Quick self-calibration on first record if not pre-trained
             dummy_vec = np.array(record.to_feature_vector(self.feature_names), dtype=np.float32)
@@ -144,7 +134,7 @@ class PyTorchFaultDetector:
         }
 
     def save_checkpoint(self, path: str):
-        """Save PyTorch model checkpoint to disk."""
+        # Save PyTorch model checkpoint to disk.
         os.makedirs(os.path.dirname(path), exist_ok=True)
         torch.save({
             "model_state_dict": self.model.state_dict(),
@@ -156,7 +146,7 @@ class PyTorchFaultDetector:
         logger.info(f"Saved PyTorch detector checkpoint to {path}")
 
     def load_checkpoint(self, path: str):
-        """Load PyTorch model checkpoint from disk."""
+        # Load PyTorch model checkpoint from disk.
         if os.path.exists(path):
             checkpoint = torch.load(path)
             self.model.load_state_dict(checkpoint["model_state_dict"])
@@ -165,3 +155,4 @@ class PyTorchFaultDetector:
             self.threshold = checkpoint.get("threshold", self.threshold)
             self.is_trained = checkpoint.get("is_trained", True)
             logger.info(f"Loaded PyTorch detector checkpoint from {path}")
+

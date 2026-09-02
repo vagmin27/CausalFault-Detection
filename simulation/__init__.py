@@ -1,6 +1,4 @@
-"""
-Simulation package for Edge-IoT physical system modeling.
-"""
+# Simulation package for Edge-IoT physical system modeling.
 from .devices import IoTDevice, DeviceType
 from .edge_nodes import EdgeNode
 from .workload import WorkloadGenerator

@@ -1,14 +1,12 @@
-"""
-DoWhy Causal Analysis Engine.
-
-Performs treatment-specific causal effect estimation (Average Causal Effect - ACE)
-using DoWhy backdoor linear regression and NetworkX system graphs to evaluate causal relationships.
-
-CRITICAL RULE:
-- Online causal analysis operates strictly on observable telemetry variables.
-- Ground-truth fault/attack labels (fault_label, original_label) MUST NOT be used as causal treatment or outcome.
-- If data is insufficient for defensible causal estimation, returns status INSUFFICIENT_EVIDENCE.
-"""
+# DoWhy Causal Analysis Engine.
+#
+# Performs treatment-specific causal effect estimation (Average Causal Effect - ACE)
+# using DoWhy backdoor linear regression and NetworkX system graphs to evaluate causal relationships.
+#
+# CRITICAL RULE:
+# - Online causal analysis operates strictly on observable telemetry variables.
+# - Ground-truth fault/attack labels (fault_label, original_label) MUST NOT be used as causal treatment or outcome.
+# - If data is insufficient for defensible causal estimation, returns status INSUFFICIENT_EVIDENCE.
 
 from dataclasses import dataclass, field
 import logging
@@ -26,13 +24,11 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CausalResult:
-    """
-    Structured Causal Analysis Result output.
-    Status can be:
-        - "CAUSAL_INFERENCE": Valid DoWhy Average Causal Effect estimation.
-        - "HEURISTIC": Feature deviation fallback when sample/variance is insufficient (Simulation mode).
-        - "INSUFFICIENT_EVIDENCE": Data insufficient for defensible cause determination.
-    """
+    # Structured Causal Analysis Result output.
+    # Status can be:
+    #     - "CAUSAL_INFERENCE": Valid DoWhy Average Causal Effect estimation.
+    #     - "HEURISTIC": Feature deviation fallback when sample/variance is insufficient (Simulation mode).
+    #     - "INSUFFICIENT_EVIDENCE": Data insufficient for defensible cause determination.
     treatment: str                          # Primary treatment variable evaluated
     outcome: str                            # Non-circular downstream outcome variable evaluated
     estimated_effect: float                 # Estimated ACE magnitude
@@ -46,9 +42,7 @@ class CausalResult:
 
 
 class CausalAnalyzer:
-    """
-    DoWhy Causal Effect Estimation Engine.
-    """
+    # DoWhy Causal Effect Estimation Engine.
 
     def __init__(self, causal_graph: Optional[SystemCausalGraph] = None):
         self.causal_graph = causal_graph if causal_graph is not None else SystemCausalGraph()
@@ -78,9 +72,7 @@ class CausalAnalyzer:
         target_node_id: Optional[str] = None,
         mode: str = "simulation",
     ) -> CausalResult:
-        """
-        Analyze recent historical window of TelemetryRecords using DoWhy causal models.
-        """
+        # Analyze recent historical window of TelemetryRecords using DoWhy causal models.
         node_key = target_node_id or "default"
         latest_ts = history_records[-1].timestamp if history_records else 0.0
 
@@ -251,9 +243,8 @@ class CausalAnalyzer:
         df: pd.DataFrame,
         node_records: List[TelemetryRecord],
     ) -> CausalResult:
-        """
-        Fallback feature z-score deviation analyzer for simulation mode when DoWhy sample size is low.
-        """
+        # Fallback feature z-score deviation analyzer for simulation mode when DoWhy sample size is low.
+
         candidate_effects = {}
         for feat in ["cpu_utilization", "memory_utilization", "network_utilization", "packet_loss", "latency"]:
             if feat in df.columns:

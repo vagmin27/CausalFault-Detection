@@ -1,10 +1,8 @@
-"""
-Edge Node Simulation Model.
-
-Models physical resource capacity (CPU, Memory, Network), latency, packet loss,
-and correlated system state evolution under workload and injected faults.
-Supports persistent physical mitigation state following recovery action execution.
-"""
+# Edge Node Simulation Model.
+#
+# Models physical resource capacity (CPU, Memory, Network), latency, packet loss,
+# and correlated system state evolution under workload and injected faults.
+# Supports persistent physical mitigation state following recovery action execution.
 
 import math
 import logging
@@ -14,10 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class EdgeNode:
-    """
-    Simulated Edge Node managing resource utilization, quality of service,
-    and persistent recovery state modifications.
-    """
+    # Simulated Edge Node managing resource utilization, quality of service,
+    # and persistent recovery state modifications.
 
     def __init__(
         self,
@@ -60,12 +56,10 @@ class EdgeNode:
         self.lat_mitigation: float = 1.0
 
     def update_metrics(self, current_workload: float):
-        """
-        Update physical system state using realistic causal equations:
-        Workload ↑ => CPU utilization ↑
-        CPU utilization ↑ => Latency ↑
-        Network congestion ↑ => Packet loss ↑ => Latency ↑
-        """
+        # Update physical system state using realistic causal equations:
+        # Workload ↑ => CPU utilization ↑
+        # CPU utilization ↑ => Latency ↑
+        # Network congestion ↑ => Packet loss ↑ => Latency ↑
         if not self.active or self.node_failed:
             self.cpu_utilization = 0.0
             self.memory_utilization = 0.0
@@ -117,7 +111,7 @@ class EdgeNode:
         fault_type_str: str,
         severity: float = 1.0,
     ):
-        """Apply base fault offsets."""
+        # Apply base fault offsets.
         if fault_type_str == "CPU_OVERLOAD":
             self.fault_cpu_offset = 60.0 * severity
         elif fault_type_str == "MEMORY_OVERLOAD":
@@ -133,7 +127,7 @@ class EdgeNode:
             self.node_failed = True
 
     def clear_faults(self):
-        """Reset fault offsets and recovery mitigation factors to baseline."""
+        # Reset fault offsets and recovery mitigation factors to baseline.
         self.fault_cpu_offset = 0.0
         self.fault_mem_offset = 0.0
         self.fault_net_offset = 0.0
@@ -149,10 +143,9 @@ class EdgeNode:
         self.lat_mitigation = 1.0
 
     def apply_recovery_action(self, action: str) -> bool:
-        """
-        Execute adaptive recovery action establishing persistent mitigation factors.
-        Returns True if action was executed successfully.
-        """
+        # Execute adaptive recovery action establishing persistent mitigation factors.
+        # Returns True if action was executed successfully.
+
         logger.info(f"[Node {self.node_id}] Applying persistent recovery action: {action}")
 
         if action == "WORKLOAD_REDISTRIBUTION":

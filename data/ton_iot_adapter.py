@@ -1,24 +1,24 @@
-"""
-TON_IoT Dataset Streaming Adapter.
 
-Provides real-time streaming ingestion for the UNSW Canberra TON_IoT dataset subsets.
-Discovers and streams observations sequentially from IoT device CSV files:
-- IoT_Fridge.csv
-- IoT_GPS_Tracker.csv
-- IoT_Garage_Door.csv
-- IoT_Modbus.csv
-- IoT_Motion_Light.csv
-- IoT_Weather.csv
+# TON_IoT Dataset Streaming Adapter.
 
-Dataset Adapter Policy:
-1. High-Performance Vectorized Ingestion: Uses chunked vectorized string cleaning and dict streaming.
-2. No Artificial Telemetry: Physical system metrics unavailable in the dataset
-   (cpu_utilization, memory_utilization, packet_loss) remain strictly None.
-3. Raw Feature Retention: Device-specific sensor telemetry (temperatures, pressure, registers, GPS, states)
-   is preserved inside TelemetryRecord.raw_features and extracted for downstream models.
-4. Ground-Truth Isolation: Original 'label' (0/1) and 'type' (attack category) are assigned to
-   fault_label and original_label for evaluation ONLY.
-"""
+# Provides real-time streaming ingestion for the UNSW Canberra TON_IoT dataset subsets.
+# Discovers and streams observations sequentially from IoT device CSV files:
+# - IoT_Fridge.csv
+# - IoT_GPS_Tracker.csv
+# - IoT_Garage_Door.csv
+# - IoT_Modbus.csv
+# - IoT_Motion_Light.csv
+# - IoT_Weather.csv
+
+# Dataset Adapter Policy:
+#     1. High-Performance Vectorized Ingestion: Uses chunked vectorized string cleaning and dict streaming.
+#     2. No Artificial Telemetry: Physical system metrics unavailable in the dataset
+#     (cpu_utilization, memory_utilization, packet_loss) remain strictly None.
+#     3. Raw Feature Retention: Device-specific sensor telemetry (temperatures, pressure, registers, GPS, states)
+#     is preserved inside TelemetryRecord.raw_features and extracted for downstream models.
+#     4. Ground-Truth Isolation: Original 'label' (0/1) and 'type' (attack category) are assigned to
+#     fault_label and original_label for evaluation ONLY.
+
 
 import os
 import glob
@@ -39,9 +39,9 @@ def _safe_str(val: Any) -> str:
 
 
 class TONIoTAdapter(DataSource):
-    """
-    High-Performance Streaming Adapter for TON_IoT device telemetry datasets.
-    """
+    
+    # High-Performance Streaming Adapter for TON_IoT device telemetry datasets.
+    
 
     def __init__(
         self,
@@ -59,7 +59,7 @@ class TONIoTAdapter(DataSource):
         return "TON_IoT"
 
     def _discover_files(self) -> List[str]:
-        """Discover CSV files in specified data path."""
+        # Discover CSV files in specified data path.
         if not self.data_path or not os.path.exists(self.data_path):
             raise FileNotFoundError(
                 f"[TON_IoT Adapter Error] Dataset path not found: '{self.data_path}'.\n"
@@ -78,9 +78,9 @@ class TONIoTAdapter(DataSource):
             raise FileNotFoundError(f"Invalid dataset path: '{self.data_path}'")
 
     def stream_telemetry(self) -> Generator[TelemetryRecord, None, None]:
-        """
-        Stream TelemetryRecords sequentially across discovered TON_IoT device CSV files.
-        """
+        
+        # Stream TelemetryRecords sequentially across discovered TON_IoT device CSV files.
+        
         files = self._discover_files()
         logger.info(f"TON_IoT Adapter discovered {len(files)} dataset files: {[os.path.basename(f) for f in files]}")
         self.processed_count = 0
@@ -117,9 +117,9 @@ class TONIoTAdapter(DataSource):
         global_idx: int,
         last_state: Dict[str, Any],
     ) -> Tuple[TelemetryRecord, Dict[str, Any]]:
-        """
-        Map a single pre-sanitized CSV row dict to TelemetryRecord without fabricating missing physical telemetry.
-        """
+        
+        # Map a single pre-sanitized CSV row dict to TelemetryRecord without fabricating missing physical telemetry.
+        
         # 1. Fast Cached Timestamp Parsing
         date_str = _safe_str(row.get("date"))
         time_str = _safe_str(row.get("time"))

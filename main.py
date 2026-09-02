@@ -1,21 +1,19 @@
-"""
-Main CLI Application for Causal Real-Time Adaptive Fault Tolerance in Edge-IoT Systems.
-
-Supports four operational modes:
-    1. Simulation Mode (--mode simulation [--seed 42] [--persistence 3]):
-    Runs a single SimPy EdgeSimulation run with baseline comparisons.
-    2. Dataset Mode (--mode dataset --dataset ton_iot --data-path <path> [--max-records N]):
-    Streams real TON_IoT dataset records through TelemetryRecord interface.
-    3. Multi-Seed Experiment Mode (--mode experiment [--seed-start 42] [--num-seeds 10]):
-    Executes reproducible multi-seed evaluation across seeds 42-51.
-    4. Sensitivity Analysis Mode (--mode sensitivity):
-    Evaluates Detection Persistence values (1, 2, 3, 4, 5).
-
-Usage Examples:
-    python main.py --mode simulation --seed 42
-    python main.py --mode dataset --dataset ton_iot --data-path "data/datasets/Processed_IoT_dataset" --max-records 10000
-    python main.py --mode dataset --dataset ton_iot --data-path "data/datasets/Processed_IoT_dataset"
-"""
+# Main CLI Application for Causal Real-Time Adaptive Fault Tolerance in Edge-IoT Systems.
+#
+# Supports four operational modes:
+#     1. Simulation Mode (--mode simulation [--seed 42] [--persistence 3]):
+#     Runs a single SimPy EdgeSimulation run with baseline comparisons.
+#     2. Dataset Mode (--mode dataset --dataset ton_iot --data-path <path> [--max-records N]):
+#     Streams real TON_IoT dataset records through TelemetryRecord interface.
+#     3. Multi-Seed Experiment Mode (--mode experiment [--seed-start 42] [--num-seeds 10]):
+#     Executes reproducible multi-seed evaluation across seeds 42-51.
+#     4. Sensitivity Analysis Mode (--mode sensitivity):
+#     Evaluates Detection Persistence values (1, 2, 3, 4, 5).
+#
+# Usage Examples:
+#     python main.py --mode simulation --seed 42
+#     python main.py --mode dataset --dataset ton_iot --data-path "data/datasets/Processed_IoT_dataset" --max-records 10000
+#     python main.py --mode dataset --dataset ton_iot --data-path "data/datasets/Processed_IoT_dataset"
 
 import os
 import sys
@@ -62,9 +60,7 @@ logger = logging.getLogger("Main")
 
 @dataclass
 class ExperimentConfig:
-    """
-    Standardized Experiment Configuration.
-    """
+    # Standardized Experiment Configuration.
     seed: int = 42
     duration: int = 200
     num_nodes: int = 3
@@ -79,6 +75,7 @@ class ExperimentConfig:
         "river_threshold": 0.65,
         "pytorch_threshold": 0.15,
     })
+
 
 
 def parse_args():
@@ -158,7 +155,7 @@ def parse_args():
 
 
 def set_reproducible_seed(seed: int):
-    """Set random seeds for python random, numpy, and pytorch."""
+    # Set random seeds for python random, numpy, and pytorch.
     random.seed(seed)
     np.random.seed(seed)
     try:
@@ -172,9 +169,7 @@ def set_reproducible_seed(seed: int):
 
 
 def is_system_state_degraded(record: TelemetryRecord) -> bool:
-    """
-    State Consistency Rule: Verify if physical system metrics reflect degradation or fault.
-    """
+    # State Consistency Rule: Verify if physical system metrics reflect degradation or fault.
     cpu = record.cpu_utilization or 0.0
     mem = record.memory_utilization or 0.0
     net = record.network_utilization or 0.0
@@ -194,10 +189,9 @@ def run_experiment_pipeline(
     no_recovery: bool = False,
     experiment_label: str = "PROPOSED_CAUSAL_ADAPTIVE_RECOVERY",
 ) -> Dict[str, Any]:
-    """
-    Run simulation pipeline.
-    """
+    # Run simulation pipeline.
     seed = config.seed
+
     duration = config.duration
     persistence_k = config.persistence
     set_reproducible_seed(seed)
@@ -448,9 +442,8 @@ def run_dataset_experiment(
     output_dir: str = "results",
     persistence_k: int = 3,
 ):
-    """
-    Run Real TON_IoT Dataset Evaluation using ultra-fast low-memory streaming.
-    """
+    # Run Real TON_IoT Dataset Evaluation using ultra-fast low-memory streaming.
+
     logger.info("")
     logger.info("           REAL TON-IOT DATASET EXPERIMENT PIPELINE INGESTION             ")
     logger.info("")
@@ -757,10 +750,8 @@ def run_dataset_experiment(
 
 
 def run_persistence_sensitivity_experiment(seed: int = 42, output_dir: str = "results"):
-    """
-    Evaluates Detection Persistence values (k = 1, 2, 3, 4, 5) to quantify
-    the Precision/Recall/Delay tradeoff. Saves CSV metrics and research plots.
-    """
+    # Evaluates Detection Persistence values (k = 1, 2, 3, 4, 5) to quantify
+    # the Precision/Recall/Delay tradeoff. Saves CSV metrics and research plots.
     logger.info("             DETECTION PERSISTENCE SENSITIVITY ANALYSIS                   ")
     
     data_dir = os.path.join(output_dir, "data")
@@ -840,10 +831,8 @@ def run_persistence_sensitivity_experiment(seed: int = 42, output_dir: str = "re
 
 
 def run_multi_seed_experiment(seed_start: int = 42, num_seeds: int = 10, output_dir: str = "results"):
-    """
-    Executes reproducible multi-seed evaluation across specified seeds.
-    Saves per-seed CSV, aggregated CSV, and multi-seed comparison plots with error bars.
-    """
+    # Executes reproducible multi-seed evaluation across specified seeds.
+    # Saves per-seed CSV, aggregated CSV, and multi-seed comparison plots with error bars.
     logger.info("")
     logger.info(f"    MULTI-SEED EVALUATION EXPERIMENT ({num_seeds} SEEDS: {seed_start} TO {seed_start + num_seeds - 1})   ")
     logger.info("")

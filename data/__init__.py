@@ -1,6 +1,4 @@
-"""
-Data module containing telemetry representation and dataset/simulator adapters.
-"""
+# Data module containing telemetry representation and dataset/simulator adapters.
 from .telemetry import TelemetryRecord, DataSource
 from .simulator_adapter import SimulatorAdapter
 from .ton_iot_adapter import TONIoTAdapter

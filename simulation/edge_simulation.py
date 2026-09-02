@@ -1,9 +1,7 @@
-"""
-SimPy Edge-IoT Simulation Engine.
-
-Orchestrates IoT devices, Edge nodes, workload variation, fault injection,
-and physical telemetry sampling within a discrete-event SimPy environment.
-"""
+# SimPy Edge-IoT Simulation Engine.
+#
+# Orchestrates IoT devices, Edge nodes, workload variation, fault injection,
+# and physical telemetry sampling within a discrete-event SimPy environment.
 
 import random
 import logging
@@ -20,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class EdgeSimulation:
-    """
-    SimPy-driven Edge-IoT System Simulation.
-    """
+    # SimPy-driven Edge-IoT System Simulation.
 
     def __init__(
         self,
@@ -63,7 +59,7 @@ class EdgeSimulation:
         self.active_fault_records: List[Dict] = []
 
     def register_active_fault(self, node_id: str, fault_type_str: str, severity: float):
-        """Register active fault injection on target edge node."""
+        # Register active fault injection on target edge node.
         if node_id in self.nodes:
             self.nodes[node_id].apply_fault(fault_type_str, severity)
             self.active_fault_records.append({
@@ -74,7 +70,7 @@ class EdgeSimulation:
             })
 
     def clear_faults_for_node(self, node_id: str):
-        """Clear active fault injection for a node."""
+        # Clear active fault injection for a node.
         if node_id in self.nodes:
             self.nodes[node_id].clear_faults()
             self.active_fault_records = [
@@ -82,10 +78,8 @@ class EdgeSimulation:
             ]
 
     def step(self) -> List[TelemetryRecord]:
-        """
-        Advance simulation by one tick step size and sample TelemetryRecords
-        from all active Edge Nodes.
-        """
+        # Advance simulation by one tick step size and sample TelemetryRecords
+        # from all active Edge Nodes.
         sim_time = self.env.now
         records = []
 
@@ -132,7 +126,7 @@ class EdgeSimulation:
         return records
 
     def apply_recovery(self, node_id: str, action: str) -> bool:
-        """Apply recovery action to target edge node."""
+        # Apply recovery action to target edge node.
         if node_id in self.nodes:
             res = self.nodes[node_id].apply_recovery_action(action)
             # Remove cleared fault record
@@ -141,3 +135,4 @@ class EdgeSimulation:
             ]
             return res
         return False
+
