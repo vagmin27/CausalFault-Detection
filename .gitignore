@@ -1,37 +1,23 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
 .Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+venv/
+ENV/
 *.egg-info/
-.installed.cfg
-*.egg
+build/
+dist/
+
+# Datasets
+data/datasets/
 
 # PyTorch checkpoints
 *.pt
 *.pth
 
-# Results output (retain folder structure)
-results/data/*.csv
-results/plots/*.png
-
-# Virtual Environment
-venv/
-ENV/
+# Results
+results/
 
 # IDE & OS
 .vscode/
