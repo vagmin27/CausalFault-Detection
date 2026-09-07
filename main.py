@@ -93,13 +93,13 @@ def parse_args():
         "--dataset",
         type=str,
         choices=["ton_iot", "edge_iiotset", "n_baiot"],
-        default="ton_iot",
+        default="edge_iiotset",
         help="Dataset selection for dataset mode",
     )
     parser.add_argument(
         "--data-path",
         type=str,
-        default="data/datasets/Processed_IoT_dataset",
+        default="data/processed/test",
         help="Path to dataset CSV file or directory for dataset mode",
     )
     parser.add_argument(
@@ -438,23 +438,29 @@ def run_experiment_pipeline(
 
 def run_dataset_experiment(
     data_path: str,
+    dataset_name: str = "edge_iiotset",
     max_records: Optional[int] = None,
     output_dir: str = "results",
     persistence_k: int = 3,
 ):
-    # Run Real TON_IoT Dataset Evaluation using ultra-fast low-memory streaming.
+    # Run Real Edge-IoT Dataset Evaluation using ultra-fast low-memory streaming.
 
     logger.info("")
-    logger.info("           REAL TON-IOT DATASET EXPERIMENT PIPELINE INGESTION             ")
+    logger.info(f"           REAL {dataset_name.upper()} DATASET EXPERIMENT PIPELINE INGESTION             ")
     logger.info("")
-    logger.info(f"Data Source Path: {data_path} | Max Records: {max_records or 'ALL (3.16M+)'}")
+    logger.info(f"Data Source Path: {data_path} | Max Records: {max_records or 'ALL'}")
 
     data_dir = os.path.join(output_dir, "data")
     plots_dir = os.path.join(output_dir, "plots")
     os.makedirs(data_dir, exist_ok=True)
     os.makedirs(plots_dir, exist_ok=True)
 
-    adapter = TONIoTAdapter(data_path=data_path, max_records=max_records)
+    if dataset_name == "edge_iiotset":
+        adapter = EdgeIIoTsetAdapter(data_path=data_path, max_records=max_records)
+    elif dataset_name == "n_baiot":
+        adapter = NBaIoTAdapter(data_path=data_path, max_records=max_records)
+    else:
+        adapter = TONIoTAdapter(data_path=data_path, max_records=max_records)
     detector = RiverFaultDetector(anomaly_threshold=0.65, seed=42)
     causal_analyzer = CausalAnalyzer()
 
@@ -594,12 +600,12 @@ def run_dataset_experiment(
 
     # 1. Save Overall Dataset Detection Metrics CSV with strict metadata
     overall_metrics = [{
-        "dataset_name": "TON_IoT",
+        "dataset_name": adapter.get_dataset_name(),
         "data_source": "Processed_IoT_dataset",
         "data_path": data_path,
         "experiment_mode": "dataset",
         "records_processed": n_processed,
-        "source_files": "IoT_Fridge.csv, IoT_GPS_Tracker.csv, IoT_Garage_Door.csv, IoT_Modbus.csv, IoT_Motion_Light.csv, IoT_Weather.csv",
+        "source_files": os.path.basename(data_path),
         "total_anomalies_detected_raw": total_raw_anomalies,
         "total_faults_confirmed": total_confirmed_anomalies,
         "true_positives": tp,
@@ -733,9 +739,9 @@ def run_dataset_experiment(
     plt.close()
 
     print("\n")
-    print("REAL TON-IOT DATASET EXPERIMENT RESULTS SUMMARY                     ")
+    print(f"REAL {adapter.get_dataset_name().upper()} DATASET EXPERIMENT RESULTS SUMMARY                     ")
     print("")
-    print(f"Data Source:                TON-IoT ({data_path})")
+    print(f"Data Source:                {adapter.get_dataset_name()} ({data_path})")
     print(f"Total Records Processed:    {n_processed:,}")
     print(f"Detection Precision:        {precision * 100:.2f}%")
     print(f"Detection Recall:           {recall * 100:.2f}%")
@@ -997,6 +1003,7 @@ def main():
             sys.exit(1)
         run_dataset_experiment(
             data_path=args.data_path,
+            dataset_name=args.dataset,
             max_records=args.max_records,
             output_dir=args.output_dir,
             persistence_k=args.persistence,

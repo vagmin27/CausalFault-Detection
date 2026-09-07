@@ -1,3 +1,7 @@
+# Datasets
+data/datasets/
+data/processed/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -8,9 +12,6 @@ ENV/
 *.egg-info/
 build/
 dist/
-
-# Datasets
-data/datasets/
 
 # PyTorch checkpoints
 *.pt
