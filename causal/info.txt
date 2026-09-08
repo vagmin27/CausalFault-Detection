@@ -1,0 +1,14 @@
+Title:  Causal Real-Time Adaptive Fault Tolerance for Edge-IoT Systems.
+Title Explaination:   Causal Real-Time Adaptive Fault Tolerance detects faults earlier, produces fewer false alarms under changing workloads, identifies the causal source of faults more accurately, and restores Edge-IoT services faster than conventional ML-based fault detection and static fault-tolerance approaches.
+Causal Fault Detection — identify whether an abnormal event is genuinely responsible for system degradation rather than merely correlated with it.
+Real-Time Fault Diagnosis — detect emerging faults from heterogeneous streaming Edge-IoT telemetry with very low detection latency.
+Adaptive Fault Tolerance — dynamically adjust resources, task placement, routing, or services according to fault severity and system state.
+Causal Recovery — evaluate alternative recovery actions and select the action expected to restore QoS with minimum latency, energy, and disruption.
+Performance Parameters:
+Mean Time to Detect (MTTD)
+Early Warning Time
+False Alarm Rate
+Causal Localization Accuracy
+Recovery Success Rate
+End-to-End Recovery Time
+Edge computational overhead
