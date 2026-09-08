@@ -1,8 +1,6 @@
-"""
-Isolation Tree (iTree) and Bilateral Weighting Model for BWOAIF.
-Based on Hannák et al. (2023):
-"Bilateral-Weighted Online Adaptive Isolation Forest for anomaly detection in streaming data"
-"""
+# Isolation Tree (iTree) and Bilateral Weighting Model for BWOAIF.
+# Based on Hannák et al. (2023):
+# "Bilateral-Weighted Online Adaptive Isolation Forest for anomaly detection in streaming data"
 
 import math
 import numpy as np
@@ -10,7 +8,7 @@ from typing import Optional, List, Dict, Any
 
 
 def c_factor(n: int) -> float:
-    """Average path length of unsuccessful search in BST for sample size n."""
+    # Average path length of unsuccessful search in BST for sample size n.
     if n <= 1:
         return 1.0
     if n == 2:
@@ -20,7 +18,7 @@ def c_factor(n: int) -> float:
 
 
 class ITreeNode:
-    """Node in an Isolation Tree."""
+    # Node in an Isolation Tree.
 
     def __init__(
         self,
@@ -40,7 +38,7 @@ class ITreeNode:
 
 
 class StreamingIsolationTree:
-    """Individual Isolation Tree with age tracking and isolation path computation."""
+    # Individual Isolation Tree with age tracking and isolation path computation.
 
     def __init__(self, max_height: int = 8, sub_sample_size: int = 64):
         self.max_height = max_height
@@ -50,7 +48,7 @@ class StreamingIsolationTree:
         self.anomaly_performance_weight: float = 1.0
 
     def fit(self, X: np.ndarray, current_batch: int = 0) -> None:
-        """Constructs an isolation tree on a sample of observations."""
+        # Constructs an isolation tree on a sample of observations.
         self.age_batch = current_batch
         n_samples = len(X)
         if n_samples == 0:
@@ -96,7 +94,7 @@ class StreamingIsolationTree:
         )
 
     def path_length(self, x: np.ndarray) -> float:
-        """Returns path length h(x) to isolate observation x."""
+        # Returns path length h(x) to isolate observation x.
         if self.root is None:
             return 0.0
 

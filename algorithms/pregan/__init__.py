@@ -1,6 +1,4 @@
-"""
-PreGAN Package (Tuli et al., 2022).
-"""
+# PreGAN Package (Tuli et al., 2022).
 
 from .algorithm import PreGANAlgorithm, PreGANConfig
 from .model import PreGANGenerator, PreGANDiscriminator

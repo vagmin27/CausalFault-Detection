@@ -1,9 +1,7 @@
-"""
-Bounded Online State Management for Causal Fault-Tolerance Pipeline.
-
-Ensures strict memory limits, prevents memory leaks during streaming,
-and maintains an isolated simulated edge state for safe recovery modeling.
-"""
+# Bounded Online State Management for Causal Fault-Tolerance Pipeline.
+#
+# Ensures strict memory limits, prevents memory leaks during streaming,
+# and maintains an isolated simulated edge state for safe recovery modeling.
 
 from collections import deque
 from dataclasses import dataclass, field
@@ -23,7 +21,7 @@ class NodeHealthStatus(Enum):
 
 @dataclass
 class SimulatedEdgeNode:
-    """Represents the simulated operational state of an edge computing node."""
+    # Represents the simulated operational state of an edge computing node.
     node_id: str
     status: NodeHealthStatus = NodeHealthStatus.HEALTHY
     active_tasks: int = 10
@@ -38,7 +36,7 @@ class SimulatedEdgeNode:
 
 
 class BoundedTelemetryBuffer:
-    """Fixed-capacity circular buffer storing recent observable telemetry vectors."""
+    # Fixed-capacity circular buffer storing recent observable telemetry vectors.
 
     def __init__(self, max_capacity: int = 100):
         self.max_capacity = max_capacity
@@ -66,10 +64,8 @@ class BoundedTelemetryBuffer:
 
 
 class CausalFTState:
-    """
-    Coordinating state manager for the Causal FT pipeline.
-    Maintains bounded memory, recent anomaly history, and simulated node topology.
-    """
+    # Coordinating state manager for the Causal FT pipeline.
+    # Maintains bounded memory, recent anomaly history, and simulated node topology.
 
     def __init__(self, window_size: int = 100):
         self.window_size = window_size

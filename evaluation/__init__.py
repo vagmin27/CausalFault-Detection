@@ -1,6 +1,4 @@
-"""
-Evaluation package for benchmark orchestration, metrics, instrumentation, and reporting.
-"""
+# Evaluation package for benchmark orchestration, metrics, instrumentation, and reporting.
 
 from .config import ExperimentConfig, HardwareProfile
 from .results_schema import BenchmarkResultRecord, ResultsCollection, MeasurementType, Comparability

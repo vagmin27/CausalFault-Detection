@@ -1,12 +1,11 @@
-"""
-IPFT: Intelligent Proactive Fault Tolerance at the Edge through Resource Usage Prediction.
-Based on Theodoropoulos et al. (2022).
+# IPFT: Intelligent Proactive Fault Tolerance at the Edge through Resource Usage Prediction.
+# Based on Theodoropoulos et al. (2022).
 
-Architecture:
-- Two-channel resource usage prediction (GRU for temporal telemetry + Dense for cluster context).
-- Dual-threshold proactive triggering (Upper threshold for migration/replication, lower for consolidation).
-- MinMin-style heuristic task allocation for preemptive migration.
-"""
+# Architecture:
+# - Two-channel resource usage prediction (GRU for temporal telemetry + Dense for cluster context).
+# - Dual-threshold proactive triggering (Upper threshold for migration/replication, lower for consolidation).
+# - MinMin-style heuristic task allocation for preemptive migration.
+
 
 from collections import deque
 from dataclasses import dataclass
@@ -14,7 +13,10 @@ from typing import Dict, Any, Optional, Set, List
 import numpy as np
 # pyrefly: ignore [missing-import]
 import torch
+
+# pyrefly: ignore [missing-import]
 import torch.nn as nn
+# pyrefly: ignore [missing-import]
 import torch.optim as optim
 
 from algorithms.base import (
@@ -29,7 +31,7 @@ from .model import IPFTNeuralPredictor
 
 @dataclass
 class IPFTConfig:
-    """Configuration for IPFT algorithm."""
+    # Configuration for IPFT algorithm.
     sequence_length: int = 10
     feature_dim: int = 62
     context_dim: int = 4
@@ -43,11 +45,9 @@ class IPFTConfig:
 
 
 class IPFTAlgorithm(BaseFaultToleranceAlgorithm):
-    """
-    Adapted implementation of IPFT (Theodoropoulos et al., 2022).
-    Predicts edge resource utilization using temporal telemetry and cluster context,
-    triggering proactive task migration under projected overload.
-    """
+    # Adapted implementation of IPFT (Theodoropoulos et al., 2022).
+    # Predicts edge resource utilization using temporal telemetry and cluster context,
+    # triggering proactive task migration under projected overload.
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         cfg_dict = config or {}
@@ -96,11 +96,9 @@ class IPFTAlgorithm(BaseFaultToleranceAlgorithm):
         self.reset()
 
     def fit(self, training_data: Any = None) -> None:
-        """
-        Fits two-channel predictor on normal training sequences.
-        Target is next-step utilization proxy computed from telemetry.
-        Never accesses Attack_label or test records.
-        """
+        # Fits two-channel predictor on normal training sequences.
+        # Target is next-step utilization proxy computed from telemetry.
+        # Never accesses Attack_label or test records.
         if training_data is None:
             return
 
@@ -168,10 +166,8 @@ class IPFTAlgorithm(BaseFaultToleranceAlgorithm):
         self.is_running = False
 
     def detect(self, record: BenchmarkInput) -> DetectionResult:
-        """
-        Executes proactive resource usage prediction on BenchmarkInput.
-        Flags predicted overload when predicted_usage > upper_threshold.
-        """
+        # Executes proactive resource usage prediction on BenchmarkInput.
+        # Flags predicted overload when predicted_usage > upper_threshold.
         vec = record.feature_vector
         self.window.append(vec)
 
@@ -211,10 +207,8 @@ class IPFTAlgorithm(BaseFaultToleranceAlgorithm):
         )
 
     def recover(self, context: Any) -> MitigationResult:
-        """
-        Proactive migration actuation based on predicted usage.
-        Executes MinMin allocation: moves tasks to edge_backup_node.
-        """
+        # Proactive migration actuation based on predicted usage.
+        # Executes MinMin allocation: moves tasks to edge_backup_node.
         if not isinstance(context, BenchmarkInput):
             return MitigationResult(action_type="NO_ACTION", success=True)
 
@@ -250,9 +244,7 @@ class IPFTAlgorithm(BaseFaultToleranceAlgorithm):
         return res
 
     def process(self, record: BenchmarkInput) -> DetectionResult:
-        """
-        Processes single observation: predicts usage -> triggers proactive migration if overloaded.
-        """
+        # Processes single observation: predicts usage -> triggers proactive migration if overloaded.
         det_result = self.detect(record)
         mit_result = None
 

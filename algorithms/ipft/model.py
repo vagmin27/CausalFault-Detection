@@ -1,24 +1,22 @@
-"""
-Neural Network Architecture for IPFT Proactive Resource Usage Prediction.
-Based on Theodoropoulos et al. (2022):
-"Intelligent Proactive Fault Tolerance at the Edge through Resource Usage Prediction"
-
-Two-channel architecture:
-- Channel 1 (Temporal): GRU processing historical local telemetry sequence.
-- Channel 2 (Global Context): Dense layers processing cluster/host summary context.
-- Head: Fusion layer predicting multi-step ahead resource utilization.
-"""
+# Neural Network Architecture for IPFT Proactive Resource Usage Prediction.
+# Based on Theodoropoulos et al. (2022):
+# "Intelligent Proactive Fault Tolerance at the Edge through Resource Usage Prediction"
+#
+# Two-channel architecture:
+# - Channel 1 (Temporal): GRU processing historical local telemetry sequence.
+# - Channel 2 (Global Context): Dense layers processing cluster/host summary context.
+# - Head: Fusion layer predicting multi-step ahead resource utilization.
 
 from typing import Tuple
+# pyrefly: ignore [missing-import]
 import torch
+# pyrefly: ignore [missing-import]
 import torch.nn as nn
 
 
 class IPFTNeuralPredictor(nn.Module):
-    """
-    Two-channel GRU + Dense prediction model for edge resource telemetry.
-    Predicts normalized future resource utilization (0.0 to 1.0).
-    """
+    # Two-channel GRU + Dense prediction model for edge resource telemetry.
+    # Predicts normalized future resource utilization (0.0 to 1.0).
 
     def __init__(
         self,
@@ -58,13 +56,11 @@ class IPFTNeuralPredictor(nn.Module):
         seq_tensor: torch.Tensor,
         context_tensor: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Args:
-            seq_tensor: (batch, seq_len, sequence_dim)
-            context_tensor: (batch, context_dim)
-        Returns:
-            predicted_usage: (batch, 1) in range [0, 1]
-        """
+        # Args:
+        #     seq_tensor: (batch, seq_len, sequence_dim)
+        #     context_tensor: (batch, context_dim)
+        # Returns:
+        #     predicted_usage: (batch, 1) in range [0, 1]
         gru_out, _ = self.gru(seq_tensor)
         temporal_repr = gru_out[:, -1, :]  # Last hidden state (batch, hidden_dim)
 

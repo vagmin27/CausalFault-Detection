@@ -1,10 +1,8 @@
-"""
-Causal Inference Engine for Structural Root-Cause Analysis (RCA).
-
-Implements Directed Acyclic Graph (DAG) structural equation modeling (SEM)
-and exogenous parent residual attribution to distinguish causal root causes
-from downstream symptoms and mere correlations.
-"""
+# Causal Inference Engine for Structural Root-Cause Analysis (RCA).
+#
+# Implements Directed Acyclic Graph (DAG) structural equation modeling (SEM)
+# and exogenous parent residual attribution to distinguish causal root causes
+# from downstream symptoms and mere correlations.
 
 import time
 import logging
@@ -21,7 +19,7 @@ logger = logging.getLogger("CausalEngine")
 
 @dataclass
 class CausalEdge:
-    """Represents a directed causal mechanism u -> v."""
+    # Represents a directed causal mechanism u -> v.
     source: str
     target: str
     weight: float = 1.0
@@ -30,10 +28,8 @@ class CausalEdge:
 
 
 class CausalGraphSpecification:
-    """
-    Constructs and manages the Directed Acyclic Graph (DAG) representation
-    of system metrics and Edge-IoT protocol causal mechanisms.
-    """
+    # Constructs and manages the Directed Acyclic Graph (DAG) representation
+    # of system metrics and Edge-IoT protocol causal mechanisms.
 
     def __init__(self):
         self.dag: nx.DiGraph = nx.DiGraph()
@@ -47,17 +43,15 @@ class CausalGraphSpecification:
         weight: float = 1.0,
         is_domain: bool = True
     ) -> None:
-        """Add a directed causal edge u -> v (u causes v)."""
+        # Add a directed causal edge u -> v (u causes v).
         self.dag.add_edge(u, v, weight=weight)
         self.edge_weights[(u, v)] = weight
         if is_domain:
             self.domain_edges.add((u, v))
 
     def build_domain_graph(self, feature_names: List[str]) -> None:
-        """
-        Initializes domain-informed causal dependencies for Edge-IIoTset telemetry.
-        All edges are explicitly labeled as domain priors.
-        """
+        # Initializes domain-informed causal dependencies for Edge-IIoTset telemetry.
+        # All edges are explicitly labeled as domain priors.
         available = set(feature_names)
 
         # Domain causal mechanisms: Transport & Protocol causes flow & aggregate states
@@ -121,10 +115,8 @@ class CausalGraphSpecification:
 
 
 class CausalInferenceEngine:
-    """
-    Executes Structural Equation Residual Analysis on the Causal DAG
-    to localize root causes from streaming observations.
-    """
+    # Executes Structural Equation Residual Analysis on the Causal DAG
+    # to localize root causes from streaming observations.
 
     def __init__(self, causal_graph: Optional[CausalGraphSpecification] = None):
         self.causal_graph = causal_graph or CausalGraphSpecification()
@@ -137,10 +129,8 @@ class CausalInferenceEngine:
         X_normal: np.ndarray,
         feature_names: List[str],
     ) -> None:
-        """
-        Fits structural equation coefficients from normal baseline telemetry:
-        v = sum_{p in Parents(v)} w_{pv} * p + epsilon_v
-        """
+        # Fits structural equation coefficients from normal baseline telemetry:
+        # v = sum_{p in Parents(v)} w_{pv} * p + epsilon_v
         self.feature_names = list(feature_names)
         if self.causal_graph.dag.number_of_edges() == 0:
             self.causal_graph.build_domain_graph(self.feature_names)
@@ -188,11 +178,9 @@ class CausalInferenceEngine:
         record: BenchmarkInput,
         top_k: int = 5,
     ) -> RCADiagnosisResult:
-        """
-        Diagnose the root cause of an anomaly for a given BenchmarkInput.
-        Calculates exogenous structural residuals:
-        r(v) = |x(v) - sum_{p in Parents(v)} w_{pv} x(p)|
-        """
+        # Diagnose the root cause of an anomaly for a given BenchmarkInput.
+        # Calculates exogenous structural residuals:
+        # r(v) = |x(v) - sum_{p in Parents(v)} w_{pv} x(p)|
         t0 = time.perf_counter_ns()
         feat_dict = record.features
 

@@ -1,18 +1,16 @@
-"""
-preprocess_dataset.py - Memory-Efficient Preprocessing & Feature Engineering for Edge-IIoTset.
-
-Strict Requirements & Constraints:
-1. Zero Imputation: Any row containing ANY missing/NaN/empty value in ANY original field is completely dropped.
-2. Complete Invalid/Infinite Value Removal: Rows containing infinite or unconvertible values are completely dropped.
-3. Post-Cleaning Deduplication: Duplicate rows are removed after invalid/missing row removal.
-4. Preservation of Valid Extreme Values: Outliers are NOT removed or clipped, as they represent real attacks/faults.
-5. Untouched Raw Data: Files in data/datasets/ remain strictly read-only.
-6. Preserve Existing Splits: Train, validation, and test splits are processed independently without reshuffling.
-7. Zero Future Lookahead: All temporal features are point-in-time per-packet (no cross-row delta across unrelated records).
-8. Train-Only Fitting: StandardScaler and categorical vocabularies are fitted ONLY on the training split.
-9. Target Isolation: Attack_label and Attack_type are strictly isolated and never used as input features.
-10. Pre-Execution 5,000-Row Sample Test: Mandatory verification of schema match, 0 NaNs, 0 infs, and compatible labels.
-"""
+# preprocess_dataset.py - Memory-Efficient Preprocessing & Feature Engineering for Edge-IIoTset.
+#
+# Strict Requirements & Constraints:
+# 1. Zero Imputation: Any row containing ANY missing/NaN/empty value in ANY original field is completely dropped.
+# 2. Complete Invalid/Infinite Value Removal: Rows containing infinite or unconvertible values are completely dropped.
+# 3. Post-Cleaning Deduplication: Duplicate rows are removed after invalid/missing row removal.
+# 4. Preservation of Valid Extreme Values: Outliers are NOT removed or clipped, as they represent real attacks/faults.
+# 5. Untouched Raw Data: Files in data/datasets/ remain strictly read-only.
+# 6. Preserve Existing Splits: Train, validation, and test splits are processed independently without reshuffling.
+# 7. Zero Future Lookahead: All temporal features are point-in-time per-packet (no cross-row delta across unrelated records).
+# 8. Train-Only Fitting: StandardScaler and categorical vocabularies are fitted ONLY on the training split.
+# 9. Target Isolation: Attack_label and Attack_type are strictly isolated and never used as input features.
+# 10. Pre-Execution 5,000-Row Sample Test: Mandatory verification of schema match, 0 NaNs, 0 infs, and compatible labels.
 
 import os
 import sys
@@ -78,14 +76,12 @@ class EdgeIIoTsetPreprocessor:
         }
 
     def clean_chunk(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
-        """
-        Cleans a raw chunk strictly according to requirements:
-        1. Drops any row where ANY original column is missing, NaN, empty, or sentinel.
-        2. Drops any row with unparseable timestamp (e.g. shifted IP lines).
-        3. Drops any row with infinite numeric values.
-        4. Drops duplicate rows after cleaning.
-        Returns cleaned df and valid parsed timestamps.
-        """
+        # Cleans a raw chunk strictly according to requirements:
+        # 1. Drops any row where ANY original column is missing, NaN, empty, or sentinel.
+        # 2. Drops any row with unparseable timestamp (e.g. shifted IP lines).
+        # 3. Drops any row with infinite numeric values.
+        # 4. Drops duplicate rows after cleaning.
+        # Returns cleaned df and valid parsed timestamps.
         # 1. Parse frame.time to datetime
         time_series = df['frame.time'].astype(str).str.strip()
         ts = pd.to_datetime(time_series, format='%Y %H:%M:%S.%f', errors='coerce')
@@ -124,14 +120,12 @@ class EdgeIIoTsetPreprocessor:
         return df_clean, ts_clean
 
     def extract_features(self, df: pd.DataFrame, ts: pd.Series) -> pd.DataFrame:
-        """
-        Extracts engineered features without lookahead and without misleading proxy labels:
-        - Point-in-time timestamp features: hour, minute, second, sin_hour, cos_hour, day_of_week
-        - Native validated network numeric columns
-        - Behavioral derived features (explicitly behavioral, not physical measurements)
-        - Protocol presence flags
-        - Train-consistent categorical encodings
-        """
+        # Extracts engineered features without lookahead and without misleading proxy labels:
+        # - Point-in-time timestamp features: hour, minute, second, sin_hour, cos_hour, day_of_week
+        # - Native validated network numeric columns
+        # - Behavioral derived features (explicitly behavioral, not physical measurements)
+        # - Protocol presence flags
+        # - Train-consistent categorical encodings
         feats = pd.DataFrame(index=df.index)
 
         # 1. Point-in-time temporal features
@@ -188,10 +182,8 @@ class EdgeIIoTsetPreprocessor:
         return feats
 
     def fit_train(self, train_files: list[str], sample_limit: int = None):
-        """
-        Pass 1: Stream training files in chunks.
-        Fits StandardScaler incrementally on training feature vectors only.
-        """
+        # Pass 1: Stream training files in chunks.
+        # Fits StandardScaler incrementally on training feature vectors only.
         print(f"\n--- [Pass 1] Fitting on Training Data ({len(train_files)} files) ---")
         total_fitted_rows = 0
         feature_cols_initialized = False
@@ -227,10 +219,8 @@ class EdgeIIoTsetPreprocessor:
         print(f"Pass 1 Complete: Fitted StandardScaler on {total_fitted_rows:,} training rows across {len(self.feature_names)} features.")
 
     def transform_and_save(self, split_name: str, files: list[str], sample_limit: int = None):
-        """
-        Pass 2: Transforms split files using the fitted train components.
-        Saves processed chunks to data/processed/{split_name}/.
-        """
+        # Pass 2: Transforms split files using the fitted train components.
+        # Saves processed chunks to data/processed/{split_name}/.
         print(f"\n--- [Pass 2] Transforming & Saving {split_name.upper()} ({len(files)} files) ---")
         split_out_dir = os.path.join(self.output_dir, split_name)
         os.makedirs(split_out_dir, exist_ok=True)
@@ -296,7 +286,7 @@ class EdgeIIoTsetPreprocessor:
         print(f"Saved {total_saved_rows:,} processed rows for {split_name}.")
 
     def save_artifacts(self):
-        """Saves fitted scaler, feature names, label mapping, and statistics."""
+        # Saves fitted scaler, feature names, label mapping, and statistics.
         os.makedirs(self.artifacts_dir, exist_ok=True)
         scaler_path = os.path.join(self.artifacts_dir, "scaler.joblib")
         joblib.dump(self.scaler, scaler_path)
@@ -315,14 +305,12 @@ class EdgeIIoTsetPreprocessor:
         print(f"  - preprocessing_report.json")
 
     def run_verification(self, sample_size=5000) -> bool:
-        """
-        Runs 5,000-row sample validation across train, validation, and test.
-        Verifies:
-        1. Identical columns and column ordering across train, val, and test.
-        2. Exactly 0 missing/NaN values across all columns.
-        3. Exactly 0 infinite values across all columns.
-        4. Compatible label distributions (Attack_label, Attack_type).
-        """
+        # Runs 5,000-row sample validation across train, validation, and test.
+        # Verifies:
+        # 1. Identical columns and column ordering across train, val, and test.
+        # 2. Exactly 0 missing/NaN values across all columns.
+        # 3. Exactly 0 infinite values across all columns.
+        # 4. Compatible label distributions (Attack_label, Attack_type).
         print(f"\n========================================================")
         print(f"  RUNNING {sample_size}-ROW SAMPLE VALIDATION TEST")
         print(f"========================================================")
@@ -401,7 +389,7 @@ class EdgeIIoTsetPreprocessor:
         return True
 
     def run_full(self):
-        """Runs complete preprocessing across all 24 CSV files."""
+        # Runs complete preprocessing across all 24 CSV files.
         print(f"\n========================================================")
         print(f"  STARTING FULL DATASET PREPROCESSING (~1.16 GB)")
         print(f"========================================================")

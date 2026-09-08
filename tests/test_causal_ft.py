@@ -1,18 +1,16 @@
-"""
-Unit and Integration Tests for Proposed Causal Fault-Tolerance Pipeline.
-
-Validates:
-1. BaseFaultToleranceAlgorithm lifecycle and contract compatibility
-2. Model training and baseline SEM fitting
-3. Streaming processing with no ground-truth leakage
-4. Real-time detection output schemas
-5. Causal root-cause analysis and ranking
-6. Synthetic A -> B -> C causal validation test
-7. Adaptive recovery policy and simulated edge state
-8. Bounded state memory management
-9. Reset functionality
-10. End-to-end smoke pipeline with SystemInstrumentation
-"""
+# Unit and Integration Tests for Proposed Causal Fault-Tolerance Pipeline.
+#
+# Validates:
+# 1. BaseFaultToleranceAlgorithm lifecycle and contract compatibility
+# 2. Model training and baseline SEM fitting
+# 3. Streaming processing with no ground-truth leakage
+# 4. Real-time detection output schemas
+# 5. Causal root-cause analysis and ranking
+# 6. Synthetic A -> B -> C causal validation test
+# 7. Adaptive recovery policy and simulated edge state
+# 8. Bounded state memory management
+# 9. Reset functionality
+# 10. End-to-end smoke pipeline with SystemInstrumentation
 
 import unittest
 import numpy as np
@@ -39,7 +37,7 @@ from evaluation.instrumentation import SystemInstrumentation
 
 
 class TestCausalFaultTolerance(unittest.TestCase):
-    """Test suite for the Proposed Causal Fault-Tolerance architecture."""
+    # Test suite for the Proposed Causal Fault-Tolerance architecture.
 
     def setUp(self):
         np.random.seed(42)
@@ -68,7 +66,7 @@ class TestCausalFaultTolerance(unittest.TestCase):
         )
 
     def test_base_contract_and_capabilities(self):
-        """Verify inheritance, lifecycle methods, and advertised capabilities."""
+        # Verify inheritance, lifecycle methods, and advertised capabilities.
         self.assertIsInstance(self.pipeline, BaseFaultToleranceAlgorithm)
         self.assertEqual(self.pipeline.paper_id, "proposed_causal_ft")
         self.assertTrue(self.pipeline.supports(AlgorithmCapability.STREAMING_DETECTION))
@@ -77,7 +75,7 @@ class TestCausalFaultTolerance(unittest.TestCase):
         self.assertFalse(self.pipeline.supports(AlgorithmCapability.RESOURCE_PREDICTION))
 
     def test_training_and_fit(self):
-        """Verify model fitting on normal training data without labels."""
+        # Verify model fitting on normal training data without labels.
         N = 200
         D = len(self.feature_names)
         X_normal = np.random.normal(loc=0.0, scale=1.0, size=(N, D))
@@ -89,7 +87,7 @@ class TestCausalFaultTolerance(unittest.TestCase):
         self.assertEqual(len(self.pipeline.detector.baseline_mean), D)
 
     def test_streaming_detection_no_leakage(self):
-        """Verify detector produces valid DetectionResult with zero ground-truth knowledge."""
+        # Verify detector produces valid DetectionResult with zero ground-truth knowledge.
         normal_feats = {k: 0.05 for k in self.feature_names}
         inp = self._create_mock_input(0, normal_feats)
 
@@ -102,12 +100,10 @@ class TestCausalFaultTolerance(unittest.TestCase):
         self.assertLess(res.anomaly_score, 0.60)
 
     def test_synthetic_causal_chain_validation(self):
-        """
-        CAUSAL VALIDATION TEST (Requirement 16):
-        Synthetic chain: A -> B -> C
-        Verify that structural residual analysis distinguishes root cause A from
-        downstream symptoms B and C, even when B and C have higher absolute values.
-        """
+        # CAUSAL VALIDATION TEST (Requirement 16):
+        # Synthetic chain: A -> B -> C
+        # Verify that structural residual analysis distinguishes root cause A from
+        # downstream symptoms B and C, even when B and C have higher absolute values.
         graph_spec = CausalGraphSpecification()
         graph_spec.add_causal_edge("A", "B", weight=2.0, is_domain=False)
         graph_spec.add_causal_edge("B", "C", weight=1.5, is_domain=False)
@@ -153,12 +149,10 @@ class TestCausalFaultTolerance(unittest.TestCase):
                          "Causal engine failed to isolate localized failure at C.")
 
     def test_synthetic_fork_confounding_validation(self):
-        """
-        SYNTHETIC FORK/CONFOUNDING TEST:
-        Z -> X, Z -> Y with NO direct edge between X and Y.
-        Verify that a shock in common cause Z does not cause the engine to falsely infer
-        X -> Y or Y -> X, and correctly identifies Z as the common root cause.
-        """
+        # SYNTHETIC FORK/CONFOUNDING TEST:
+        # Z -> X, Z -> Y with NO direct edge between X and Y.
+        # Verify that a shock in common cause Z does not cause the engine to falsely infer
+        # X -> Y or Y -> X, and correctly identifies Z as the common root cause.
         graph_spec = CausalGraphSpecification()
         graph_spec.add_causal_edge("Z", "X", weight=2.0, is_domain=False)
         graph_spec.add_causal_edge("Z", "Y", weight=3.0, is_domain=False)
@@ -206,7 +200,7 @@ class TestCausalFaultTolerance(unittest.TestCase):
         self.assertNotIn("Y", engine.causal_graph.get_parents("X"))
 
     def test_adaptive_recovery_escalation(self):
-        """Verify adaptive escalation from rate-limiting to preemptive migration on consecutive faults."""
+        # Verify adaptive escalation from rate-limiting to preemptive migration on consecutive faults.
         state = CausalFTState(window_size=50)
         policy = AdaptiveCausalRecoveryPolicy(state)
 
@@ -235,7 +229,7 @@ class TestCausalFaultTolerance(unittest.TestCase):
         self.assertGreater(act3.state_bytes_transferred, 0)
 
     def test_bounded_state_memory(self):
-        """Verify that streaming 500 records maintains fixed bounded ring buffer size."""
+        # Verify that streaming 500 records maintains fixed bounded ring buffer size.
         pipeline = CausalFaultTolerancePipeline(config={"window_size": 30})
         for i in range(150):
             feats = {k: float(i % 5) for k in self.feature_names}
@@ -247,7 +241,7 @@ class TestCausalFaultTolerance(unittest.TestCase):
         self.assertLessEqual(len(pipeline.state.detected_faults), 30)
 
     def test_reset_functionality(self):
-        """Verify complete state and counter cleanup on reset()."""
+        # Verify complete state and counter cleanup on reset().
         inp = self._create_mock_input(0, {k: 10.0 for k in self.feature_names})
         self.pipeline.process(inp)
         self.assertIsNotNone(self.pipeline.last_diagnosis)
@@ -258,11 +252,9 @@ class TestCausalFaultTolerance(unittest.TestCase):
         self.assertEqual(len(self.pipeline.state.telemetry_buffer), 0)
 
     def test_end_to_end_smoke_pipeline(self):
-        """
-        Smoke test (Requirement 17):
-        Stream records through pipeline with SystemInstrumentation and verify:
-        input -> detection -> causal analysis -> recovery decision -> instrumentation.
-        """
+        # Smoke test (Requirement 17):
+        # Stream records through pipeline with SystemInstrumentation and verify:
+        # input -> detection -> causal analysis -> recovery decision -> instrumentation.
         pipeline = CausalFaultTolerancePipeline(config={"detection_threshold": 0.50})
         instrumentation = SystemInstrumentation()
 

@@ -1,6 +1,4 @@
-"""
-Proposed Causal Fault-Tolerance Package.
-"""
+# Proposed Causal Fault-Tolerance Package.
 
 from .pipeline import CausalFaultTolerancePipeline, CausalFTResult
 from .detector import StreamingCausalDetector, DetectorConfig

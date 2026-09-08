@@ -1,11 +1,9 @@
-"""
-Small Validation Benchmark Runner (Phase 6B).
-Executes a 2,000-record streaming evaluation on Edge-IIoTset:
-- 1,000 warm-up records (excluded from metrics)
-- 1,000 evaluation records
-- Standardized SystemInstrumentation
-- Complete algorithm isolation per run
-"""
+# Small Validation Benchmark Runner (Phase 6B).
+# Executes a 2,000-record streaming evaluation on Edge-IIoTset:
+# - 1,000 warm-up records (excluded from metrics)
+# - 1,000 evaluation records
+# - Standardized SystemInstrumentation
+# - Complete algorithm isolation per run
 
 import os
 import sys

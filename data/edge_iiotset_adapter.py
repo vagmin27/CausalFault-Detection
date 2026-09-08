@@ -14,10 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class EdgeIIoTsetAdapter(DataSource):
-    """
-    Adapter for streaming telemetry observations from Edge-IIoTset dataset files.
-    Supports streaming from a single CSV or an entire directory of processed CSV files.
-    """
+    # Adapter for streaming telemetry observations from Edge-IIoTset dataset files.
+    # Supports streaming from a single CSV or an entire directory of processed CSV files.
 
     def __init__(self, data_path: Optional[str] = None, max_records: Optional[int] = None):
         self.data_path = data_path or "data/processed/test"

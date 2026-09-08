@@ -1,9 +1,7 @@
-"""
-RCA Evaluation Script for RCD and Proposed Causal FT (Phase 7 Part C & D).
-Evaluates:
-1. Synthetic Controlled RCA Benchmark (known ground-truth injected root causes).
-2. Edge-IIoTset Domain-Proxy RCA Benchmark (defensible protocol mapping, NR otherwise).
-"""
+# RCA Evaluation Script for RCD and Proposed Causal FT (Phase 7 Part C & D).
+# Evaluates:
+# 1. Synthetic Controlled RCA Benchmark (known ground-truth injected root causes).
+# 2. Edge-IIoTset Domain-Proxy RCA Benchmark (defensible protocol mapping, NR otherwise).
 
 import os
 import sys
@@ -21,10 +19,8 @@ from evaluation.context import BenchmarkInput
 
 
 def evaluate_synthetic_rca_benchmark() -> Dict[str, Any]:
-    """
-    Evaluates RCA on controlled synthetic causal networks with 20 diverse fault injection trials.
-    Ground truth root causes are known exactly.
-    """
+    # Evaluates RCA on controlled synthetic causal networks with 20 diverse fault injection trials.
+    # Ground truth root causes are known exactly.
     print("--- Evaluating Controlled Synthetic RCA Benchmark ---")
     np.random.seed(42)
 
@@ -129,10 +125,8 @@ def evaluate_synthetic_rca_benchmark() -> Dict[str, Any]:
 
 
 def evaluate_domain_proxy_rca_benchmark() -> Dict[str, Any]:
-    """
-    Evaluates Edge-IIoTset attack episodes against documented Domain-Proxy root-cause mappings.
-    Unmapped attack types are marked strictly as NR.
-    """
+    # Evaluates Edge-IIoTset attack episodes against documented Domain-Proxy root-cause mappings.
+    # Unmapped attack types are marked strictly as NR.
     print("\n--- Evaluating Edge-IIoTset Domain-Proxy RCA Benchmark ---")
     with open(os.path.join("data", "processed", "artifacts", "feature_names.json")) as f:
         feat_names = json.load(f)

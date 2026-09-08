@@ -1,11 +1,9 @@
-"""
-Context and Data Objects for Benchmark Execution.
-
-Enforces strict separation between:
-1. OBSERVABLE INPUT (BenchmarkInput) - visible to algorithms.
-2. GROUND TRUTH (EventGroundTruth) - visible ONLY to the evaluation layer.
-3. MEASUREMENT STATE (BenchmarkState) - tracks metrics and instrumentation.
-"""
+# Context and Data Objects for Benchmark Execution.
+#
+# Enforces strict separation between:
+# 1. OBSERVABLE INPUT (BenchmarkInput) - visible to algorithms.
+# 2. GROUND TRUTH (EventGroundTruth) - visible ONLY to the evaluation layer.
+# 3. MEASUREMENT STATE (BenchmarkState) - tracks metrics and instrumentation.
 
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
@@ -14,11 +12,9 @@ import numpy as np
 
 @dataclass(frozen=True)
 class BenchmarkInput:
-    """
-    Standardized, strictly observable input object passed to algorithms.
-    Contains ONLY features and permitted telemetry metadata.
-    Guaranteed to contain NO ground-truth labels, NO future records, and NO evaluation state.
-    """
+    # Standardized, strictly observable input object passed to algorithms.
+    # Contains ONLY features and permitted telemetry metadata.
+    # Guaranteed to contain NO ground-truth labels, NO future records, and NO evaluation state.
     stream_position: int
     timestamp: float
     timestamp_str: str
@@ -33,10 +29,8 @@ class BenchmarkInput:
 
 @dataclass(frozen=True)
 class EventGroundTruth:
-    """
-    Ground-truth event metadata visible ONLY to the evaluation harness.
-    Never exposed to algorithm inputs.
-    """
+    # Ground-truth event metadata visible ONLY to the evaluation harness.
+    # Never exposed to algorithm inputs.
     stream_position: int
     timestamp: float
     device_id: str
@@ -50,10 +44,8 @@ class EventGroundTruth:
 
 @dataclass
 class BenchmarkContext:
-    """
-    Coordinating context for a single observation step in the benchmark.
-    Maintains clean boundaries between observable data, ground truth, and timing.
-    """
+    # Coordinating context for a single observation step in the benchmark.
+    # Maintains clean boundaries between observable data, ground truth, and timing.
     stream_position: int
     observable_input: BenchmarkInput
     ground_truth: EventGroundTruth

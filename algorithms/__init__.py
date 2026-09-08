@@ -1,6 +1,4 @@
-"""
-Algorithms package exposing base interfaces and capability definitions.
-"""
+# Algorithms package exposing base interfaces and capability definitions.
 
 from .base import (
     BaseFaultToleranceAlgorithm,

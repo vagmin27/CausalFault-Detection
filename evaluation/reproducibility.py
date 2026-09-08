@@ -1,9 +1,7 @@
-"""
-Experiment Reproducibility and Environment Profiling Module.
-
-Captures immutable hardware, software, Git, and package metadata to ensure
-full empirical reproducibility of all benchmark results.
-"""
+# Experiment Reproducibility and Environment Profiling Module.
+#
+# Captures immutable hardware, software, Git, and package metadata to ensure
+# full empirical reproducibility of all benchmark results.
 
 import os
 import sys
@@ -21,7 +19,7 @@ except ImportError:
 
 
 def get_git_commit_hash() -> str:
-    """Retrieves current Git commit SHA-1 if available."""
+    # Retrieves current Git commit SHA-1 if available.
     try:
         out = subprocess.check_output(
             ["git", "rev-parse", "HEAD"],
@@ -34,7 +32,7 @@ def get_git_commit_hash() -> str:
 
 
 def get_git_status_clean() -> bool:
-    """Checks if git repository working tree is clean."""
+    # Checks if git repository working tree is clean.
     try:
         out = subprocess.check_output(
             ["git", "status", "--porcelain"],
@@ -47,7 +45,7 @@ def get_git_status_clean() -> bool:
 
 
 def get_installed_package_versions() -> Dict[str, str]:
-    """Records exact installed versions of key scientific and system packages."""
+    # Records exact installed versions of key scientific and system packages.
     packages = [
         "numpy", "pandas", "scipy", "scikit-learn", "torch",
         "river", "networkx", "dowhy", "psutil", "joblib", "matplotlib"
@@ -67,10 +65,8 @@ def capture_reproducibility_environment(
     config: Optional[Any] = None,
     seed: Optional[int] = 42
 ) -> Dict[str, Any]:
-    """
-    Constructs a comprehensive reproducibility record.
-    Saved alongside raw benchmark results.
-    """
+    # Constructs a comprehensive reproducibility record.
+    # Saved alongside raw benchmark results.
     env = {
         "experiment_name": experiment_name,
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
@@ -106,7 +102,7 @@ def capture_reproducibility_environment(
 
 
 def save_reproducibility_record(record: Dict[str, Any], output_path: str = "results/raw/environment.json") -> None:
-    """Persists environment record to disk."""
+    # Persists environment record to disk.
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
         json.dump(record, f, indent=2)

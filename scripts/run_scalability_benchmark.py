@@ -1,10 +1,8 @@
-"""
-Scalability Benchmark Runner (Phase 7 Part P).
-Evaluates:
-1. Feature Dimensional Scalability: D in {10, 25, 50, 62}
-2. System / Workload Scalability: M in {5, 10, 20, 50} emulated edge nodes/workloads
-Fits empirical scaling exponent alpha: T ~ c * D^alpha, T ~ c * M^alpha.
-"""
+# Scalability Benchmark Runner (Phase 7 Part P).
+# Evaluates:
+# 1. Feature Dimensional Scalability: D in {10, 25, 50, 62}
+# 2. System / Workload Scalability: M in {5, 10, 20, 50} emulated edge nodes/workloads
+# Fits empirical scaling exponent alpha: T ~ c * D^alpha, T ~ c * M^alpha.
 
 import os
 import sys
@@ -16,6 +14,7 @@ from typing import Dict, Any, List
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+# pyrefly: ignore [missing-import]
 import torch
 torch.set_num_threads(1)
 

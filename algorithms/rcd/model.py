@@ -1,14 +1,12 @@
-"""
-Localized Constraint-Based Causal Discovery (RCD).
-Based on Ikram et al. (2022):
-"Root Cause Analysis of Failures in Microservices through Causal Discovery"
-
-Implements:
-- F-node (failure/intervention indicator: 0=normal, 1=anomalous).
-- Localized conditional independence testing (Fisher-Z / partial correlation).
-- Local neighborhood restriction around the failure indicator.
-- Top-k root-cause ranking.
-"""
+# Localized Constraint-Based Causal Discovery (RCD).
+# Based on Ikram et al. (2022):
+# "Root Cause Analysis of Failures in Microservices through Causal Discovery"
+#
+# Implements:
+# - F-node (failure/intervention indicator: 0=normal, 1=anomalous).
+# - Localized conditional independence testing (Fisher-Z / partial correlation).
+# - Local neighborhood restriction around the failure indicator.
+# - Top-k root-cause ranking.
 
 import math
 from typing import List, Dict, Tuple, Optional, Set
@@ -17,10 +15,8 @@ from scipy import stats
 
 
 def partial_correlation(x: np.ndarray, y: np.ndarray, Z: np.ndarray) -> float:
-    """
-    Computes sample partial correlation corr(x, y | Z).
-    If Z is empty, returns Pearson correlation.
-    """
+    # Computes sample partial correlation corr(x, y | Z).
+    # If Z is empty, returns Pearson correlation.
     if Z is None or Z.size == 0 or Z.shape[1] == 0:
         if np.std(x) < 1e-8 or np.std(y) < 1e-8:
             return 0.0
@@ -52,11 +48,9 @@ def fisher_z_test(
     Z: np.ndarray,
     alpha: float = 0.05
 ) -> Tuple[bool, float, float]:
-    """
-    Fisher's Z-transform conditional independence test:
-    H0: corr(x, y | Z) = 0.
-    Returns (is_independent, p_value, z_statistic).
-    """
+    # Fisher's Z-transform conditional independence test:
+    # H0: corr(x, y | Z) = 0.
+    # Returns (is_independent, p_value, z_statistic).
     n = len(x)
     k = Z.shape[1] if (Z is not None and Z.size > 0) else 0
     dof = n - k - 3

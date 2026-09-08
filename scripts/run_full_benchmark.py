@@ -1,9 +1,7 @@
-"""
-Full Common Test Benchmark Runner (Phase 7 Part E - P).
-Evaluates all five approaches on the processed Edge-IIoTset test stream under
-identical conditions, calibrated thresholds, single-thread CPU execution,
-and system instrumentation.
-"""
+# Full Common Test Benchmark Runner (Phase 7 Part E - P).
+# Evaluates all five approaches on the processed Edge-IIoTset test stream under
+# identical conditions, calibrated thresholds, single-thread CPU execution,
+# and system instrumentation.
 
 import os
 import sys
@@ -17,6 +15,7 @@ from typing import Dict, Any, List
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+# pyrefly: ignore [missing-import]
 import torch
 torch.set_num_threads(1)
 if hasattr(torch, "set_num_interop_threads"):
@@ -220,7 +219,7 @@ def run_benchmark_trial(
 
 
 def aggregate_trials(trials: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Computes mean, std, and 95% confidence intervals across trials."""
+    # Computes mean, std, and 95% confidence intervals across trials.
     numeric_keys = [
         "throughput_rec_sec", "per_record_latency_ms", "per_record_latency_p95_ms",
         "avg_cpu_percent", "peak_rss_mb", "bandwidth_kb_sec", "estimated_energy_joules",

@@ -1,7 +1,5 @@
-"""
-Unit and integration tests for CommonDataHarness, StreamConfig, label isolation,
-timing boundaries, manifest generation, and dry-run execution.
-"""
+# Unit and integration tests for CommonDataHarness, StreamConfig, label isolation,
+# timing boundaries, manifest generation, and dry-run execution.
 
 import unittest
 import os
@@ -32,7 +30,7 @@ from algorithms.base import (
 
 
 class DryRunDummyAlgorithm(BaseFaultToleranceAlgorithm):
-    """Simple dummy algorithm for harness dry-run only. Produces no research claims."""
+    # Simple dummy algorithm for harness dry-run only. Produces no research claims.
 
     @property
     def name(self) -> str:
@@ -77,7 +75,7 @@ class TestDataHarness(unittest.TestCase):
         self.harness = CommonDataHarness(self.config)
 
     def test_label_isolation_and_no_leakage(self):
-        """Verify Attack_label and Attack_type are strictly invisible to BenchmarkInput."""
+        # Verify Attack_label and Attack_type are strictly invisible to BenchmarkInput.
         contexts = list(self.harness.stream_contexts())
         self.assertEqual(len(contexts), 100)
 
@@ -98,7 +96,7 @@ class TestDataHarness(unittest.TestCase):
             self.assertIsInstance(gt.is_fault, bool)
 
     def test_deterministic_ordering_and_stream_identity(self):
-        """Verify identical record ordering across repeated iterations."""
+        # Verify identical record ordering across repeated iterations.
         stream1 = list(self.harness.stream_contexts())
         stream2 = list(self.harness.stream_contexts())
 
@@ -112,7 +110,7 @@ class TestDataHarness(unittest.TestCase):
             )
 
     def test_warmup_delineation(self):
-        """Verify warm-up records are strictly flagged (is_warmup=True for first 20 records)."""
+        # Verify warm-up records are strictly flagged (is_warmup=True for first 20 records).
         contexts = list(self.harness.stream_contexts())
         warmup_ctxs = [c for c in contexts if c.is_warmup]
         eval_ctxs = [c for c in contexts if not c.is_warmup]
@@ -123,7 +121,7 @@ class TestDataHarness(unittest.TestCase):
         self.assertTrue(all(c.stream_position >= 20 for c in eval_ctxs))
 
     def test_manifest_generation(self):
-        """Verify results/raw/benchmark_manifest.json accurately describes stream."""
+        # Verify results/raw/benchmark_manifest.json accurately describes stream.
         with tempfile.TemporaryDirectory() as tmpdir:
             manifest = self.harness.generate_manifest(output_dir=tmpdir)
             manifest_path = os.path.join(tmpdir, "benchmark_manifest.json")
@@ -136,7 +134,7 @@ class TestDataHarness(unittest.TestCase):
             self.assertTrue(len(manifest["manifest_hash"]) > 0)
 
     def test_reproducibility_environment(self):
-        """Verify reproducibility capture contains OS, Python, packages, and hardware."""
+        # Verify reproducibility capture contains OS, Python, packages, and hardware.
         env = capture_reproducibility_environment(config=self.config)
         self.assertIn("python", env)
         self.assertIn("operating_system", env)
@@ -150,7 +148,7 @@ class TestDataHarness(unittest.TestCase):
             self.assertTrue(os.path.exists(out_path))
 
     def test_not_applicable_metric_representation(self):
-        """Verify NOT_APPLICABLE comparability and NR measurement type representation."""
+        # Verify NOT_APPLICABLE comparability and NR measurement type representation.
         rec_na = build_result_record(
             algorithm="BWOAIF",
             paper_id="paper2_bwoaif",
@@ -167,11 +165,9 @@ class TestDataHarness(unittest.TestCase):
         self.assertIsNone(rec_na.value)
 
     def test_dry_run_pipeline_execution(self):
-        """
-        Complete Dry-Run Execution:
-        load stream -> BenchmarkInput -> ground truth separation -> invoke DummyAlgorithm
-        -> collect instrumentation -> create standardized result records.
-        """
+        # Complete Dry-Run Execution:
+        # load stream -> BenchmarkInput -> ground truth separation -> invoke DummyAlgorithm
+        # -> collect instrumentation -> create standardized result records.
         algo = DryRunDummyAlgorithm()
         algo.initialize(self.config)
         algo.start()

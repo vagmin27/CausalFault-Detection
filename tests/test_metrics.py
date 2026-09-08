@@ -1,19 +1,17 @@
-"""
-Unit Tests for Centralized Metric Calculations and Result Schema.
-
-Tests all 10 Headline Evaluation Parameters:
-1. Latency / Delay (MTTD, Diagnosis, Recovery, End-to-End)
-2. Execution / Response Time (Inference ms/rec, Response time, Overhead ratio)
-3. Accuracy (Detection F1/ROC-AUC, RCA Top-k Recall, Recovery Success Rate)
-4. Computational Capacity & Throughput (Hardware Profile, Records/sec)
-5. Resource Utilization (CPU %, Peak RSS MB)
-6. Bandwidth (Streaming KB/s, Migration MB)
-7. Energy Consumption (Estimated Joules & Watt-hours)
-8. Operational Recovery Cost (SLO violation rate, Normalized penalty score)
-9. Reliability & Availability (Availability %, Task reliability %, MTTF/MTTR)
-10. Scalability (Scaling exponent alpha)
-11. Results Schema (MeasurementType, Comparability, NR handling, CSV serialization)
-"""
+# Unit Tests for Centralized Metric Calculations and Result Schema.
+#
+# Tests all 10 Headline Evaluation Parameters:
+# 1. Latency / Delay (MTTD, Diagnosis, Recovery, End-to-End)
+# 2. Execution / Response Time (Inference ms/rec, Response time, Overhead ratio)
+# 3. Accuracy (Detection F1/ROC-AUC, RCA Top-k Recall, Recovery Success Rate)
+# 4. Computational Capacity & Throughput (Hardware Profile, Records/sec)
+# 5. Resource Utilization (CPU %, Peak RSS MB)
+# 6. Bandwidth (Streaming KB/s, Migration MB)
+# 7. Energy Consumption (Estimated Joules & Watt-hours)
+# 8. Operational Recovery Cost (SLO violation rate, Normalized penalty score)
+# 9. Reliability & Availability (Availability %, Task reliability %, MTTF/MTTR)
+# 10. Scalability (Scaling exponent alpha)
+# 11. Results Schema (MeasurementType, Comparability, NR handling, CSV serialization)
 
 import unittest
 import math

@@ -1,12 +1,10 @@
-"""
-Proposed Causal Adaptive Fault-Tolerance Pipeline.
-
-Integrates:
-1. Online streaming anomaly detection (StreamingCausalDetector)
-2. Structural Equation Model causal root-cause analysis (CausalInferenceEngine)
-3. Closed-loop adaptive recovery policy (AdaptiveCausalRecoveryPolicy)
-4. Bounded state management (CausalFTState)
-"""
+# Proposed Causal Adaptive Fault-Tolerance Pipeline.
+#
+# Integrates:
+# 1. Online streaming anomaly detection (StreamingCausalDetector)
+# 2. Structural Equation Model causal root-cause analysis (CausalInferenceEngine)
+# 3. Closed-loop adaptive recovery policy (AdaptiveCausalRecoveryPolicy)
+# 4. Bounded state management (CausalFTState)
 
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional, Set
@@ -28,7 +26,7 @@ from .recovery_policy import AdaptiveCausalRecoveryPolicy
 
 @dataclass
 class CausalFTResult:
-    """Standardized composite result for Causal Fault-Tolerance pipeline."""
+    # Standardized composite result for Causal Fault-Tolerance pipeline.
     detection: DetectionResult
     diagnosis: Optional[RCADiagnosisResult] = None
     mitigation: Optional[MitigationResult] = None
@@ -37,9 +35,7 @@ class CausalFTResult:
 
 
 class CausalFaultTolerancePipeline(BaseFaultToleranceAlgorithm):
-    """
-    Main proposed framework algorithm implementing end-to-end causal fault tolerance.
-    """
+    # Main proposed framework algorithm implementing end-to-end causal fault tolerance.
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self._config = config or {}
@@ -71,7 +67,7 @@ class CausalFaultTolerancePipeline(BaseFaultToleranceAlgorithm):
         }
 
     def initialize(self, config: Any = None) -> None:
-        """Initialize models, hyperparameters, and internal structures."""
+        # Initialize models, hyperparameters, and internal structures.
         if config is not None and isinstance(config, dict):
             self._config.update(config)
             if "detection_threshold" in config:
@@ -79,11 +75,9 @@ class CausalFaultTolerancePipeline(BaseFaultToleranceAlgorithm):
         self.reset()
 
     def fit(self, training_data: Any = None) -> None:
-        """
-        Fit detector baseline statistics and learn SEM structural causal equations
-        using unlabeled training telemetry.
-        Never accesses labels or test records.
-        """
+        # Fit detector baseline statistics and learn SEM structural causal equations
+        # using unlabeled training telemetry.
+        # Never accesses labels or test records.
         if training_data is None:
             return
 
@@ -103,18 +97,16 @@ class CausalFaultTolerancePipeline(BaseFaultToleranceAlgorithm):
         self.causal_engine.fit_structural_equations(X_train, feat_names)
 
     def start(self) -> None:
-        """Invoked before the streaming evaluation starts."""
+        # Invoked before the streaming evaluation starts.
         self.is_running = True
 
     def stop(self) -> None:
-        """Invoked after the streaming evaluation completes."""
+        # Invoked after the streaming evaluation completes.
         self.is_running = False
 
     def process(self, record: BenchmarkInput) -> DetectionResult:
-        """
-        Process a single streaming observation BenchmarkInput.
-        Coordinates detection -> causal RCA -> adaptive recovery.
-        """
+        # Process a single streaming observation BenchmarkInput.
+        # Coordinates detection -> causal RCA -> adaptive recovery.
         # 1. Real-time streaming detection
         det_result = self.detect(record)
 
@@ -146,7 +138,7 @@ class CausalFaultTolerancePipeline(BaseFaultToleranceAlgorithm):
         return det_result
 
     def detect(self, record: BenchmarkInput) -> DetectionResult:
-        """Execute streaming anomaly detection on BenchmarkInput."""
+        # Execute streaming anomaly detection on BenchmarkInput.
         return self.detector.detect(record)
 
     def diagnose_root_cause(
@@ -154,10 +146,8 @@ class CausalFaultTolerancePipeline(BaseFaultToleranceAlgorithm):
         normal_window: Any = None,
         anomalous_window: Any = None,
     ) -> RCADiagnosisResult:
-        """
-        Executes root cause localization.
-        If windows are provided, uses anomalous record; otherwise diagnoses latest state.
-        """
+        # Executes root cause localization.
+        # If windows are provided, uses anomalous record; otherwise diagnoses latest state.
         if anomalous_window is not None:
             if isinstance(anomalous_window, BenchmarkInput):
                 return self.causal_engine.diagnose(anomalous_window)
@@ -186,13 +176,13 @@ class CausalFaultTolerancePipeline(BaseFaultToleranceAlgorithm):
         )
 
     def execute_mitigation(self, context: Any = None) -> MitigationResult:
-        """Executes or queries the latest mitigation action."""
+        # Executes or queries the latest mitigation action.
         if self.last_mitigation is not None:
             return self.last_mitigation
         return MitigationResult(action_type="NO_ACTION", success=True)
 
     def reset(self) -> None:
-        """Reset internal states, ring buffers, and counters."""
+        # Reset internal states, ring buffers, and counters.
         self.state.reset()
         self.detector.reset()
         self.last_diagnosis = None

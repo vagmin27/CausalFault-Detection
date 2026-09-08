@@ -1,6 +1,4 @@
-"""
-RCD Package (Ikram et al., 2022).
-"""
+# RCD Package (Ikram et al., 2022).
 
 from .algorithm import RCDAlgorithm, RCDConfig
 from .model import fisher_z_test, partial_correlation

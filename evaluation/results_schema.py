@@ -1,6 +1,4 @@
-"""
-Formal Results Schema and Data Representation for Dual-Track Evaluation.
-"""
+# Formal Results Schema and Data Representation for Dual-Track Evaluation.
 
 from dataclasses import dataclass, field, asdict
 from enum import Enum
@@ -11,7 +9,7 @@ import pandas as pd
 
 
 class MeasurementType(str, Enum):
-    """Origin and nature of the recorded metric value."""
+    # Origin and nature of the recorded metric value.
     PAPER_REPORTED = "PAPER_REPORTED"
     MEASURED = "MEASURED"
     REPRODUCED = "REPRODUCED"
@@ -20,7 +18,7 @@ class MeasurementType(str, Enum):
 
 
 class Comparability(str, Enum):
-    """Academic comparability status relative to the other approaches."""
+    # Academic comparability status relative to the other approaches.
     DIRECT = "DIRECT"
     CONDITIONAL = "CONDITIONAL"
     NOT_COMPARABLE = "NOT_COMPARABLE"
@@ -28,11 +26,9 @@ class Comparability(str, Enum):
 
 @dataclass
 class BenchmarkResultRecord:
-    """
-    Standardized result record schema.
-    Every evaluation metric emitted by any algorithm or extracted from papers
-    must strictly conform to this schema.
-    """
+    # Standardized result record schema.
+    # Every evaluation metric emitted by any algorithm or extracted from papers
+    # must strictly conform to this schema.
     algorithm: str
     paper_id: str
     metric: str
@@ -74,7 +70,7 @@ class BenchmarkResultRecord:
 
 
 class ResultsCollection:
-    """In-memory collection of BenchmarkResultRecord entries with serialization."""
+    # In-memory collection of BenchmarkResultRecord entries with serialization.
 
     def __init__(self):
         self.records: List[BenchmarkResultRecord] = []

@@ -1,14 +1,12 @@
-"""
-Unit Tests for IPFT Algorithm Implementation.
-Validates:
-1. Base interface compliance
-2. Initialization and reset
-3. Training/fitting on normal telemetry
-4. Streaming detection and proactive migration triggering
-5. No label leakage
-6. Correct capability advertising and unsupported capability gating
-7. Small synthetic smoke pipeline
-"""
+# Unit Tests for IPFT Algorithm Implementation.
+# Validates:
+# 1. Base interface compliance
+# 2. Initialization and reset
+# 3. Training/fitting on normal telemetry
+# 4. Streaming detection and proactive migration triggering
+# 5. No label leakage
+# 6. Correct capability advertising and unsupported capability gating
+# 7. Small synthetic smoke pipeline
 
 import unittest
 import numpy as np
@@ -44,7 +42,7 @@ class TestIPFTAlgorithm(unittest.TestCase):
         )
 
     def test_base_interface_and_capabilities(self):
-        """Verify inheritance and correct advertised capabilities."""
+        # Verify inheritance and correct advertised capabilities.
         self.assertIsInstance(self.algo, BaseFaultToleranceAlgorithm)
         self.assertEqual(self.algo.paper_id, "paper1_ipft")
         self.assertTrue(self.algo.supports(AlgorithmCapability.RESOURCE_PREDICTION))
@@ -53,26 +51,26 @@ class TestIPFTAlgorithm(unittest.TestCase):
         self.assertFalse(self.algo.supports(AlgorithmCapability.CAUSAL_ROOT_CAUSE_ANALYSIS))
 
     def test_unsupported_capability_rejection(self):
-        """Verify that diagnose() raises NotImplementedError."""
+        # Verify that diagnose() raises NotImplementedError.
         inp = self._create_mock_input(0)
         with self.assertRaises(NotImplementedError):
             self.algo.diagnose(inp, inp)
 
     def test_fit_and_training(self):
-        """Verify fit executes on normal training data without errors."""
+        # Verify fit executes on normal training data without errors.
         X_train = np.random.normal(0.0, 1.0, size=(100, self.num_features))
         self.algo.fit(X_train)
         self.assertTrue(self.algo.is_fitted)
 
     def test_streaming_process_no_leakage(self):
-        """Verify streaming process with no label access."""
+        # Verify streaming process with no label access.
         inp = self._create_mock_input(0, val=0.05)
         res = self.algo.process(inp)
         self.assertIsInstance(res, DetectionResult)
         self.assertIn("predicted_resource_usage", res.raw_output)
 
     def test_overload_proactive_migration_trigger(self):
-        """Verify that heavy resource surge triggers proactive migration."""
+        # Verify that heavy resource surge triggers proactive migration.
         # Warm up window
         for i in range(5):
             self.algo.process(self._create_mock_input(i, val=0.1))
@@ -91,7 +89,7 @@ class TestIPFTAlgorithm(unittest.TestCase):
         self.assertGreater(mit.state_bytes_transferred, 0)
 
     def test_reset_functionality(self):
-        """Verify clean state reset."""
+        # Verify clean state reset.
         inp = self._create_mock_input(0, val=10.0)
         self.algo.process(inp)
         self.assertGreater(len(self.algo.window), 0)

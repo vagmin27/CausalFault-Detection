@@ -1,13 +1,11 @@
-"""
-BWOAIF: Bilateral-Weighted Online Adaptive Isolation Forest.
-Based on Hannák et al. (2023).
-
-Architecture:
-- Online Isolation Forest with age-tiered trees.
-- Streaming batch updates for continuous concept drift adaptation.
-- Bilateral weighting combining exponential age decay and score sensitivity.
-- Strictly detection-focused baseline; no recovery or RCA actuation.
-"""
+# BWOAIF: Bilateral-Weighted Online Adaptive Isolation Forest.
+# Based on Hannák et al. (2023).
+#
+# Architecture:
+# - Online Isolation Forest with age-tiered trees.
+# - Streaming batch updates for continuous concept drift adaptation.
+# - Bilateral weighting combining exponential age decay and score sensitivity.
+# - Strictly detection-focused baseline; no recovery or RCA actuation.
 
 from dataclasses import dataclass
 from typing import Dict, Any, Optional, Set, List
@@ -25,7 +23,7 @@ from .model import StreamingIsolationTree, c_factor
 
 @dataclass
 class BWOAIFConfig:
-    """Configuration for BWOAIF streaming anomaly detector."""
+    # Configuration for BWOAIF streaming anomaly detector.
     num_trees: int = 25
     sub_sample_size: int = 64
     max_tree_height: int = 8
@@ -36,10 +34,8 @@ class BWOAIFConfig:
 
 
 class BWOAIAlgorithm(BaseFaultToleranceAlgorithm):
-    """
-    BWOAIF streaming anomaly detector (Hannák et al., 2023).
-    Adapts to concept drift in streaming telemetry using bilateral-weighted isolation trees.
-    """
+    # BWOAIF streaming anomaly detector (Hannák et al., 2023).
+    # Adapts to concept drift in streaming telemetry using bilateral-weighted isolation trees.
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         cfg = config or {}
@@ -79,10 +75,8 @@ class BWOAIAlgorithm(BaseFaultToleranceAlgorithm):
         self.reset()
 
     def fit(self, training_data: Any = None) -> None:
-        """
-        Initializes the initial forest using normal training observations.
-        Does not access labels or future test records.
-        """
+        # Initializes the initial forest using normal training observations.
+        # Does not access labels or future test records.
         if training_data is None:
             return
 
@@ -112,9 +106,7 @@ class BWOAIAlgorithm(BaseFaultToleranceAlgorithm):
         self.is_running = False
 
     def _compute_bilateral_weights(self) -> np.ndarray:
-        """
-        Computes composite weights W_i = w_time(i) * w_score(i) for all trees.
-        """
+        # Computes composite weights W_i = w_time(i) * w_score(i) for all trees.
         weights = []
         for tree in self.trees:
             # 1. Time decay weight
@@ -131,9 +123,7 @@ class BWOAIAlgorithm(BaseFaultToleranceAlgorithm):
         return w_arr / sum_w
 
     def detect(self, record: BenchmarkInput) -> DetectionResult:
-        """
-        Computes online anomaly score for streaming observation BenchmarkInput.
-        """
+        # Computes online anomaly score for streaming observation BenchmarkInput.
         vec = record.feature_vector
 
         # Fallback initialization if fit was not called
@@ -177,7 +167,7 @@ class BWOAIAlgorithm(BaseFaultToleranceAlgorithm):
         )
 
     def _update_forest(self) -> None:
-        """Replaces the oldest tree with a newly fitted tree on the recent streaming batch."""
+        # Replaces the oldest tree with a newly fitted tree on the recent streaming batch.
         if not self.current_batch_data:
             return
 
@@ -197,7 +187,7 @@ class BWOAIAlgorithm(BaseFaultToleranceAlgorithm):
         self.current_batch_data.clear()
 
     def process(self, record: BenchmarkInput) -> DetectionResult:
-        """Evaluates single streaming record."""
+        # Evaluates single streaming record.
         return self.detect(record)
 
     def reset(self) -> None:

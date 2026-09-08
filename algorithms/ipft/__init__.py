@@ -1,6 +1,4 @@
-"""
-IPFT Package (Theodoropoulos et al., 2022).
-"""
+# IPFT Package (Theodoropoulos et al., 2022).
 
 from .algorithm import IPFTAlgorithm, IPFTConfig
 from .model import IPFTNeuralPredictor

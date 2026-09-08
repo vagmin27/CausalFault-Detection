@@ -1,6 +1,4 @@
-"""
-Unit tests for algorithms/base.py interfaces, capability checking, and result types.
-"""
+# Unit tests for algorithms/base.py interfaces, capability checking, and result types.
 
 import unittest
 from typing import Set
@@ -15,7 +13,7 @@ from algorithms.base import (
 
 
 class DummyDetector(BaseFaultToleranceAlgorithm):
-    """Concrete dummy implementation supporting only streaming detection."""
+    # Concrete dummy implementation supporting only streaming detection.
 
     @property
     def name(self) -> str:

@@ -1,14 +1,12 @@
-"""
-Unit Tests for RCD Algorithm (Ikram et al., 2022).
-Validates:
-1. Base interface compliance
-2. Initialization and reset
-3. Fitting baseline normal data
-4. Localized causal discovery and F-node testing
-5. Top-k root-cause ranking
-6. Rejection of unsupported capabilities (detect, recover)
-7. Synthetic root-cause isolation test
-"""
+# Unit Tests for RCD Algorithm (Ikram et al., 2022).
+# Validates:
+# 1. Base interface compliance
+# 2. Initialization and reset
+# 3. Fitting baseline normal data
+# 4. Localized causal discovery and F-node testing
+# 5. Top-k root-cause ranking
+# 6. Rejection of unsupported capabilities (detect, recover)
+# 7. Synthetic root-cause isolation test
 
 import unittest
 import numpy as np
@@ -30,7 +28,7 @@ class TestRCDAlgorithm(unittest.TestCase):
         self.algo = RCDAlgorithm(config={"significance_alpha": 0.05, "top_k": 3})
 
     def test_base_interface_and_capabilities(self):
-        """Verify RCD advertises ONLY CAUSAL_ROOT_CAUSE_ANALYSIS."""
+        # Verify RCD advertises ONLY CAUSAL_ROOT_CAUSE_ANALYSIS.
         self.assertIsInstance(self.algo, BaseFaultToleranceAlgorithm)
         self.assertEqual(self.algo.paper_id, "paper3_rcd")
         self.assertTrue(self.algo.supports(AlgorithmCapability.CAUSAL_ROOT_CAUSE_ANALYSIS))
@@ -40,7 +38,7 @@ class TestRCDAlgorithm(unittest.TestCase):
         self.assertFalse(self.algo.supports(AlgorithmCapability.CLOSED_LOOP_FAULT_TOLERANCE))
 
     def test_unsupported_capability_rejections(self):
-        """Verify detect() and recover() raise NotImplementedError."""
+        # Verify detect() and recover() raise NotImplementedError.
         dummy_input = BenchmarkInput(
             stream_position=0, timestamp=0.0, timestamp_str="",
             device_id="", edge_node_id="", features={},
@@ -52,19 +50,17 @@ class TestRCDAlgorithm(unittest.TestCase):
             self.algo.recover(dummy_input)
 
     def test_fit_stores_baseline(self):
-        """Verify fit stores normal training data."""
+        # Verify fit stores normal training data.
         X_norm = np.random.normal(0.0, 1.0, size=(50, len(self.feature_names)))
         self.algo.fit(X_norm)
         self.assertTrue(self.algo.is_fitted)
         self.assertEqual(self.algo.baseline_normal_data.shape, (50, 5))
 
     def test_localized_causal_discovery_synthetic_rca(self):
-        """
-        Verify RCD identifies the true injected fault source:
-        Baseline: All features ~ N(0, 1)
-        Anomalous: Specific feature (cpu_usage) experiences massive shock (mean=15.0),
-        while others remain normal. RCD must identify cpu_usage as #1 root cause.
-        """
+        # Verify RCD identifies the true injected fault source:
+        # Baseline: All features ~ N(0, 1)
+        # Anomalous: Specific feature (cpu_usage) experiences massive shock (mean=15.0),
+        # while others remain normal. RCD must identify cpu_usage as #1 root cause.
         N = 60
         D = len(self.feature_names)
         X_norm = np.random.normal(0.0, 1.0, size=(N, D))
@@ -90,7 +86,7 @@ class TestRCDAlgorithm(unittest.TestCase):
         self.assertGreater(diag.confidence_scores["cpu_usage"], 0.0)
 
     def test_reset(self):
-        """Verify reset clears diagnosis cache."""
+        # Verify reset clears diagnosis cache.
         self.algo.last_diagnosis = RCADiagnosisResult(ranked_root_causes=["test"])
         self.algo.reset()
         self.assertIsNone(self.algo.last_diagnosis)

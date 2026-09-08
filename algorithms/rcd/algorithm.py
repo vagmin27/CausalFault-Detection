@@ -1,15 +1,13 @@
-"""
-RCD: Root Cause Analysis of Failures in Microservices through Causal Discovery.
-Based on Ikram et al. (2022).
-
-Architecture:
-- Data-driven localized constraint-based causal discovery.
-- F-node (failure/intervention indicator) comparing normal vs. anomalous data.
-- Localized conditional independence testing (PC-style Fisher-Z tests) restricted
-  to the neighborhood of the failure node F.
-- Top-k root-cause ranking by conditional dependence strength.
-- Exclusively an RCA baseline: no streaming detection or recovery.
-"""
+# RCD: Root Cause Analysis of Failures in Microservices through Causal Discovery.
+# Based on Ikram et al. (2022).
+#
+# Architecture:
+# - Data-driven localized constraint-based causal discovery.
+# - F-node (failure/intervention indicator) comparing normal vs. anomalous data.
+# - Localized conditional independence testing (PC-style Fisher-Z tests) restricted
+#   to the neighborhood of the failure node F.
+# - Top-k root-cause ranking by conditional dependence strength.
+# - Exclusively an RCA baseline: no streaming detection or recovery.
 
 import time
 from collections import deque
@@ -29,7 +27,7 @@ from .model import fisher_z_test
 
 @dataclass
 class RCDConfig:
-    """Configuration parameters for RCD algorithm."""
+    # Configuration parameters for RCD algorithm.
     significance_alpha: float = 0.05
     max_conditioning_size: int = 2
     top_k: int = 5
@@ -37,10 +35,8 @@ class RCDConfig:
 
 
 class RCDAlgorithm(BaseFaultToleranceAlgorithm):
-    """
-    RCD: Root Cause Analysis through Causal Discovery (Ikram et al., 2022).
-    Discovers data-driven causal relationships between metrics and the failure state F.
-    """
+    # RCD: Root Cause Analysis through Causal Discovery (Ikram et al., 2022).
+    # Discovers data-driven causal relationships between metrics and the failure state F.
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         cfg = config or {}
@@ -80,10 +76,8 @@ class RCDAlgorithm(BaseFaultToleranceAlgorithm):
         self.reset()
 
     def fit(self, training_data: Any = None) -> None:
-        """
-        Stores normal baseline observations to serve as D_normal during diagnosis.
-        Does not access attack labels or test split.
-        """
+        # Stores normal baseline observations to serve as D_normal during diagnosis.
+        # Does not access attack labels or test split.
         if training_data is None:
             return
 
@@ -107,13 +101,11 @@ class RCDAlgorithm(BaseFaultToleranceAlgorithm):
         normal_window: Any = None,
         anomalous_window: Any = None,
     ) -> RCADiagnosisResult:
-        """
-        Executes Localized Causal Discovery:
-        1. Formulates F-node (0 = normal, 1 = anomalous).
-        2. Tests conditional independence of each metric X_i with F.
-        3. Prunes conditionally independent variables.
-        4. Ranks remaining candidate causes by Fisher-Z dependence statistic.
-        """
+        # Executes Localized Causal Discovery:
+        # 1. Formulates F-node (0 = normal, 1 = anomalous).
+        # 2. Tests conditional independence of each metric X_i with F.
+        # 3. Prunes conditionally independent variables.
+        # 4. Ranks remaining candidate causes by Fisher-Z dependence statistic.
         t0 = time.perf_counter_ns()
 
         # 1. Resolve normal and anomalous matrices
@@ -211,7 +203,7 @@ class RCDAlgorithm(BaseFaultToleranceAlgorithm):
         normal_window: Any,
         anomalous_window: Any,
     ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
-        """Extracts numerical arrays from window objects or baseline state."""
+        # Extracts numerical arrays from window objects or baseline state.
         # 1. Resolve anomalous window
         if isinstance(anomalous_window, BenchmarkInput):
             X_anom = anomalous_window.feature_vector.reshape(1, -1)
@@ -246,11 +238,9 @@ class RCDAlgorithm(BaseFaultToleranceAlgorithm):
         return X_norm, X_anom, feat_names
 
     def process(self, record: BenchmarkInput) -> DetectionResult:
-        """
-        Consumes streaming observation into sliding telemetry window.
-        RCD is explicitly an RCA algorithm; it does not perform online anomaly detection.
-        Returns a non-actionable DetectionResult placeholder while updating internal window.
-        """
+        # Consumes streaming observation into sliding telemetry window.
+        # RCD is explicitly an RCA algorithm; it does not perform online anomaly detection.
+        # Returns a non-actionable DetectionResult placeholder while updating internal window.
         self.sliding_window.append(record.feature_vector)
         return DetectionResult(
             is_anomaly=False,

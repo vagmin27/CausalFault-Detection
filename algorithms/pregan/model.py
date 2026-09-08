@@ -1,8 +1,6 @@
-"""
-PreGAN Neural Network Models (GAT + GRU + Prototypical Generator).
-Based on Tuli et al. (2022):
-"PreGAN: Preemptive Migration Prediction Network for Proactive Fault-Tolerant Edge Computing"
-"""
+# PreGAN Neural Network Models (GAT + GRU + Prototypical Generator).
+# Based on Tuli et al. (2022):
+# "PreGAN: Preemptive Migration Prediction Network for Proactive Fault-Tolerant Edge Computing"
 
 import torch
 import torch.nn as nn
@@ -10,7 +8,7 @@ import torch.nn.functional as F
 
 
 class FeatureAttentionLayer(nn.Module):
-    """Self-attention across telemetry feature channels (GAT-style spatial correlation)."""
+    # Self-attention across telemetry feature channels (GAT-style spatial correlation).
 
     def __init__(self, in_features: int, out_features: int):
         super().__init__()
@@ -25,10 +23,8 @@ class FeatureAttentionLayer(nn.Module):
 
 
 class PreGANGenerator(nn.Module):
-    """
-    Generator network combining GAT feature attention, GRU temporal modeling,
-    and prototypical embedding to predict preemptive migration need and target host.
-    """
+    # Generator network combining GAT feature attention, GRU temporal modeling,
+    # and prototypical embedding to predict preemptive migration need and target host.
 
     def __init__(
         self,
@@ -74,7 +70,7 @@ class PreGANGenerator(nn.Module):
 
 
 class PreGANDiscriminator(nn.Module):
-    """Discriminator / critic evaluating validity of generated host allocations."""
+    # Discriminator / critic evaluating validity of generated host allocations.
 
     def __init__(self, prototype_dim: int = 16):
         super().__init__()

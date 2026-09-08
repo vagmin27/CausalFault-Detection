@@ -1,3 +1,1 @@
-"""
-Unit tests package for evaluation framework and algorithms.
-"""
+# Unit tests package for evaluation framework and algorithms.

@@ -1,13 +1,11 @@
-"""
-Common Benchmark Data Harness for Edge-IIoTset Telemetry Streaming.
-
-Ensures:
-- Identical observation stream delivered to all algorithms.
-- Complete isolation of ground-truth labels from algorithm observable inputs.
-- Deterministic ordering and chunked memory-efficient streaming.
-- Standardized 1,000-record warm-up delineation.
-- Benchmark manifest generation for full experimental reproducibility.
-"""
+# Common Benchmark Data Harness for Edge-IIoTset Telemetry Streaming.
+#
+# Ensures:
+# - Identical observation stream delivered to all algorithms.
+# - Complete isolation of ground-truth labels from algorithm observable inputs.
+# - Deterministic ordering and chunked memory-efficient streaming.
+# - Standardized 1,000-record warm-up delineation.
+# - Benchmark manifest generation for full experimental reproducibility.
 
 import os
 import glob
@@ -48,7 +46,7 @@ ATTACK_TO_FAULT_CATEGORY: Dict[str, Tuple[str, Optional[str]]] = {
 
 @dataclass
 class StreamConfig:
-    """Canonical test stream specification ensuring 100% identical evaluation input."""
+    # Canonical test stream specification ensuring 100% identical evaluation input.
     dataset_name: str = "edge_iiotset"
     split: str = "test"
     data_dir: str = "data/processed/test"
@@ -72,10 +70,8 @@ class StreamConfig:
 
 
 class CommonDataHarness:
-    """
-    Standardized streaming harness feeding all five approaches under identical conditions.
-    Guarantees strict separation of observable features from ground truth.
-    """
+    # Standardized streaming harness feeding all five approaches under identical conditions.
+    # Guarantees strict separation of observable features from ground truth.
 
     def __init__(self, config: Optional[StreamConfig] = None):
         self.config = config or StreamConfig()
@@ -107,7 +103,7 @@ class CommonDataHarness:
         return [path]
 
     def generate_manifest(self, output_dir: str = "results/raw") -> Dict[str, Any]:
-        """Generates results/raw/benchmark_manifest.json documenting stream parameters."""
+        # Generates results/raw/benchmark_manifest.json documenting stream parameters.
         os.makedirs(output_dir, exist_ok=True)
         manifest = {
             "dataset_name": self.config.dataset_name,
@@ -131,10 +127,8 @@ class CommonDataHarness:
         return manifest
 
     def stream_contexts(self) -> Generator[BenchmarkContext, None, None]:
-        """
-        Streams standardized BenchmarkContext objects.
-        Yields (observable_input, ground_truth) cleanly separated.
-        """
+        # Streams standardized BenchmarkContext objects.
+        # Yields (observable_input, ground_truth) cleanly separated.
         position = 0
         max_recs = self.config.max_records
         warmup_limit = self.config.warmup_count

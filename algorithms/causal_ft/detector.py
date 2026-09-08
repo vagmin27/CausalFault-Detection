@@ -1,10 +1,8 @@
-"""
-Online Streaming Fault and Anomaly Detector.
-
-Processes strictly observable BenchmarkInput records one-by-one.
-Computes anomaly scores using baseline reconstruction distance and online
-exponential moving deviation without access to ground truth labels or future records.
-"""
+# Online Streaming Fault and Anomaly Detector.
+#
+# Processes strictly observable BenchmarkInput records one-by-one.
+# Computes anomaly scores using baseline reconstruction distance and online
+# exponential moving deviation without access to ground truth labels or future records.
 
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
@@ -17,7 +15,7 @@ from evaluation.context import BenchmarkInput
 
 @dataclass
 class DetectorConfig:
-    """Configuration for streaming detector."""
+    # Configuration for streaming detector.
     threshold: float = 0.65
     ewma_alpha: float = 0.2
     min_variance_epsilon: float = 1e-4
@@ -25,10 +23,8 @@ class DetectorConfig:
 
 
 class StreamingCausalDetector:
-    """
-    Streaming online anomaly detector for edge telemetry.
-    Maintains bounded online state and operates strictly on observable features.
-    """
+    # Streaming online anomaly detector for edge telemetry.
+    # Maintains bounded online state and operates strictly on observable features.
 
     def __init__(self, config: Optional[DetectorConfig] = None):
         self.config = config or DetectorConfig()
@@ -42,10 +38,8 @@ class StreamingCausalDetector:
         self.stream_count: int = 0
 
     def fit(self, training_data: np.ndarray) -> None:
-        """
-        Fit detector baseline on training split feature vectors.
-        Operates strictly on unlabeled training telemetry.
-        """
+        # Fit detector baseline on training split feature vectors.
+        # Operates strictly on unlabeled training telemetry.
         if training_data is None or len(training_data) == 0:
             return
 
@@ -55,10 +49,8 @@ class StreamingCausalDetector:
         self.is_fitted = True
 
     def detect(self, record: BenchmarkInput) -> DetectionResult:
-        """
-        Evaluate a single streaming observation BenchmarkInput.
-        Returns standardized DetectionResult.
-        """
+        # Evaluate a single streaming observation BenchmarkInput.
+        # Returns standardized DetectionResult.
         vec = record.feature_vector
         if vec is None or len(vec) == 0:
             return DetectionResult(is_anomaly=False, anomaly_score=0.0, confidence=1.0)
@@ -108,6 +100,6 @@ class StreamingCausalDetector:
         )
 
     def reset(self) -> None:
-        """Reset running online EWMA state while preserving fitted baseline."""
+        # Reset running online EWMA state while preserving fitted baseline.
         self.ewma_mean = None
         self.stream_count = 0

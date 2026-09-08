@@ -1,14 +1,14 @@
-"""
-Validation-Only Threshold Calibration Script (Phase 7 Part B).
-Evaluates candidate thresholds on data/processed/validation/ ONLY.
-Selects operating thresholds maximizing validation F1.
-"""
+# Validation-Only Threshold Calibration Script (Phase 7 Part B).
+# Evaluates candidate thresholds on data/processed/validation/ ONLY.
+# Selects operating thresholds maximizing validation F1.
 
 import os
 import sys
 import json
 import time
+# pyrefly: ignore [missing-import]
 import torch
+# pyrefly: ignore [missing-import]
 import numpy as np
 import pandas as pd
 from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score, average_precision_score
@@ -33,7 +33,7 @@ from evaluation.data_harness import CommonDataHarness, StreamConfig
 
 
 def load_validation_data(n_records: int = 25000):
-    """Loads validation telemetry records and true labels."""
+    # Loads validation telemetry records and true labels.
     print(f"Loading {n_records} records from data/processed/validation/...")
     with open(os.path.join("data", "processed", "artifacts", "feature_names.json")) as f:
         feature_names = json.load(f)
@@ -46,7 +46,7 @@ def load_validation_data(n_records: int = 25000):
 
 
 def sweep_thresholds(y_true: np.ndarray, scores: np.ndarray, algo_name: str):
-    """Sweeps candidate thresholds to select threshold maximizing validation F1."""
+    # Sweeps candidate thresholds to select threshold maximizing validation F1.
     candidates = np.linspace(0.01, 0.99, 99)
     best_tau = 0.50
     best_f1 = -1.0

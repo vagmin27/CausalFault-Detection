@@ -1,6 +1,4 @@
-"""
-Standardized experiment configuration for common benchmark evaluation.
-"""
+# Standardized experiment configuration for common benchmark evaluation.
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
@@ -15,7 +13,7 @@ except ImportError:
 
 @dataclass
 class HardwareProfile:
-    """Hardware and OS baseline profile of the execution environment."""
+    # Hardware and OS baseline profile of the execution environment.
     system: str = field(default_factory=platform.system)
     release: str = field(default_factory=platform.release)
     processor: str = field(default_factory=platform.processor)
@@ -40,7 +38,7 @@ class HardwareProfile:
 
 @dataclass
 class ExperimentConfig:
-    """Standardized configuration ensuring identical conditions across algorithms."""
+    # Standardized configuration ensuring identical conditions across algorithms.
     # Dataset configuration
     dataset_name: str = "edge_iiotset"
     data_dir: str = "data/processed"

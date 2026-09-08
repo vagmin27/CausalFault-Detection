@@ -1,6 +1,4 @@
-"""
-Unit test verifying smoke-test dataset ingestion and evaluation instrumentation.
-"""
+# Unit test verifying smoke-test dataset ingestion and evaluation instrumentation.
 
 import unittest
 import os

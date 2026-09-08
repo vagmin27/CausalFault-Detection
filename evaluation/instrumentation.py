@@ -1,16 +1,14 @@
-"""
-System Instrumentation and Resource Profiling Utilities.
-
-Provides real-time measurement tools for:
-- perf_counter_ns execution timing
-- Process-level CPU utilization sampling
-- Peak RSS memory tracking
-- Processing throughput (records/sec)
-- Event timestamps
-- Bandwidth accounting (telemetry & migration bytes)
-- Estimated energy consumption modeling
-- Operational recovery action counters
-"""
+# System Instrumentation and Resource Profiling Utilities.
+#
+# Provides real-time measurement tools for:
+# - perf_counter_ns execution timing
+# - Process-level CPU utilization sampling
+# - Peak RSS memory tracking
+# - Processing throughput (records/sec)
+# - Event timestamps
+# - Bandwidth accounting (telemetry & migration bytes)
+# - Estimated energy consumption modeling
+# - Operational recovery action counters
 
 import time
 import os
@@ -20,7 +18,7 @@ from typing import Optional, Dict, Any, List
 
 
 class ExecutionTimer:
-    """High-precision execution timer utilizing time.perf_counter_ns()."""
+    # High-precision execution timer utilizing time.perf_counter_ns().
 
     def __init__(self):
         self.start_ns: int = 0
@@ -63,7 +61,7 @@ class ExecutionTimer:
 
 
 class ResourceMonitor:
-    """Monitors process-isolated CPU utilization and resident set size (RSS) memory."""
+    # Monitors process-isolated CPU utilization and resident set size (RSS) memory.
 
     def __init__(self, sample_interval_sec: float = 0.05):
         self.sample_interval = sample_interval_sec
@@ -122,7 +120,7 @@ class ResourceMonitor:
 
 
 class ThroughputCounter:
-    """Calculates sustained observation ingestion throughput (records/sec)."""
+    # Calculates sustained observation ingestion throughput (records/sec).
 
     def __init__(self):
         self.total_records: int = 0
@@ -147,7 +145,7 @@ class ThroughputCounter:
 
 
 class BandwidthAccountant:
-    """Tracks telemetry streaming byte volumes and migration state transfer bandwidth."""
+    # Tracks telemetry streaming byte volumes and migration state transfer bandwidth.
 
     def __init__(self):
         self.telemetry_bytes: int = 0
@@ -184,20 +182,16 @@ class BandwidthAccountant:
 
 
 class EnergyEstimator:
-    """
-    Estimates electrical energy consumption using a calibrated linear-polynomial
-    power model based on CPU utilization and execution time.
-    """
+    # Estimates electrical energy consumption using a calibrated linear-polynomial
+    # power model based on CPU utilization and execution time.
 
     def __init__(self, idle_watts: float = 2.7, peak_watts: float = 6.4):
         self.idle_watts = idle_watts
         self.peak_watts = peak_watts
 
     def estimate_energy_joules(self, cpu_utilization_percent: float, elapsed_seconds: float) -> float:
-        """
-        Energy (Joules) = Power (Watts) * Time (Seconds)
-        Power = P_idle + (P_peak - P_idle) * (CPU_util / 100)
-        """
+        # Energy (Joules) = Power (Watts) * Time (Seconds)
+        # Power = P_idle + (P_peak - P_idle) * (CPU_util / 100)
         cpu_fraction = max(0.0, min(100.0, cpu_utilization_percent)) / 100.0
         instantaneous_power_watts = self.idle_watts + (self.peak_watts - self.idle_watts) * cpu_fraction
         return float(instantaneous_power_watts * elapsed_seconds)
@@ -207,7 +201,7 @@ class EnergyEstimator:
 
 
 class ActionCounter:
-    """Tracks operational mitigation actions and SLA violation episodes."""
+    # Tracks operational mitigation actions and SLA violation episodes.
 
     def __init__(self, slo_latency_threshold_ms: float = 100.0):
         self.slo_threshold_ms = slo_latency_threshold_ms
@@ -261,7 +255,7 @@ class ActionCounter:
 
 
 class SystemInstrumentation:
-    """Integrated facade coordinating all instrumentation domains for an experiment run."""
+    # Integrated facade coordinating all instrumentation domains for an experiment run.
 
     def __init__(self, idle_watts: float = 2.7, peak_watts: float = 6.4, slo_threshold_ms: float = 100.0):
         self.timer = ExecutionTimer()

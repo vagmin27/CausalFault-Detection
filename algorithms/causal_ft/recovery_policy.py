@@ -1,11 +1,9 @@
-"""
-Adaptive Causal Fault Recovery Policy.
-
-Translates causal root-cause diagnosis into targeted edge remediation actions.
-Operates within a simulated edge computing execution model, adapting recovery
-decisions based on causal efficacy tracking without pretending to alter immutable
-historical telemetry streams.
-"""
+# Adaptive Causal Fault Recovery Policy.
+#
+# Translates causal root-cause diagnosis into targeted edge remediation actions.
+# Operates within a simulated edge computing execution model, adapting recovery
+# decisions based on causal efficacy tracking without pretending to alter immutable
+# historical telemetry streams.
 
 from dataclasses import dataclass, field
 from enum import Enum
@@ -44,7 +42,7 @@ FEATURE_TO_FAULT_CLASS = {
 
 @dataclass
 class RecoveryDecision:
-    """Detailed metadata for a planned or executed recovery action."""
+    # Detailed metadata for a planned or executed recovery action.
     action_type: RecoveryActionType
     timestamp: float
     affected_node: str
@@ -58,11 +56,9 @@ class RecoveryDecision:
 
 
 class AdaptiveCausalRecoveryPolicy:
-    """
-    Closed-loop causal fault tolerance policy.
-    Maps identified root causes and system health to remediation actions,
-    adapting policy choice based on action history and consecutive fault escalation.
-    """
+    # Closed-loop causal fault tolerance policy.
+    # Maps identified root causes and system health to remediation actions,
+    # adapting policy choice based on action history and consecutive fault escalation.
 
     def __init__(self, state_manager: CausalFTState):
         self.state_manager = state_manager
@@ -78,9 +74,7 @@ class AdaptiveCausalRecoveryPolicy:
         record: BenchmarkInput,
         diagnosis: RCADiagnosisResult,
     ) -> MitigationResult:
-        """
-        Selects and executes an adaptive remediation action in the simulated edge state.
-        """
+        # Selects and executes an adaptive remediation action in the simulated edge state.
         source_node_id = record.edge_node_id or "192.168.0.101"
         node = self.state_manager.get_or_create_node(source_node_id)
         current_pos = record.stream_position
