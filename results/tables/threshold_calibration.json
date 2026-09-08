@@ -1,0 +1,58 @@
+{
+  "proposed_causal_ft": {
+    "algorithm": "Proposed Causal FT",
+    "selected_threshold": 0.15,
+    "selection_rule": "maximize_validation_F1",
+    "validation_precision": 0.4142,
+    "validation_recall": 0.6292,
+    "validation_f1": 0.4995,
+    "validation_roc_auc": 0.7137,
+    "validation_pr_auc": 0.3801,
+    "score_min": 0.1186,
+    "score_mean": 0.1698,
+    "score_max": 1.0,
+    "scoring_time_sec": 0.44
+  },
+  "paper1_ipft": {
+    "algorithm": "IPFT (Theodoropoulos et al., 2022)",
+    "selected_threshold": 0.01,
+    "selection_rule": "maximize_validation_F1",
+    "validation_precision": 0.2276,
+    "validation_recall": 1.0,
+    "validation_f1": 0.3709,
+    "validation_roc_auc": 0.435,
+    "validation_pr_auc": 0.2026,
+    "score_min": 0.3312,
+    "score_mean": 0.4956,
+    "score_max": 0.5275,
+    "scoring_time_sec": 9.82
+  },
+  "paper2_bwoaif": {
+    "algorithm": "BWOAIF (Hann\u00e1k et al., 2023)",
+    "selected_threshold": 0.49,
+    "selection_rule": "maximize_validation_F1",
+    "validation_precision": 0.2552,
+    "validation_recall": 0.8139,
+    "validation_f1": 0.3886,
+    "validation_roc_auc": 0.6044,
+    "validation_pr_auc": 0.2892,
+    "score_min": 0.4413,
+    "score_mean": 0.5022,
+    "score_max": 0.6061,
+    "scoring_time_sec": 0.98
+  },
+  "paper4_pregan": {
+    "algorithm": "PreGAN (Tuli et al., 2022)",
+    "selected_threshold": 0.01,
+    "selection_rule": "maximize_validation_F1",
+    "validation_precision": 0.2276,
+    "validation_recall": 1.0,
+    "validation_f1": 0.3709,
+    "validation_roc_auc": 0.5289,
+    "validation_pr_auc": 0.3232,
+    "score_min": 0.0179,
+    "score_mean": 0.0195,
+    "score_max": 0.0229,
+    "scoring_time_sec": 10.13
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "synthetic_controlled_benchmark": {
+    "evaluation_type": "SYNTHETIC_CONTROLLED_GROUND_TRUTH",
+    "total_trials": 7,
+    "causal_ft": {
+      "top_1_recall": 100.0,
+      "top_3_recall": 100.0,
+      "top_5_recall": 100.0,
+      "mean_diagnosis_latency_ms": 0.1205
+    },
+    "rcd": {
+      "top_1_recall": 57.14,
+      "top_3_recall": 85.71,
+      "top_5_recall": 100.0,
+      "mean_diagnosis_latency_ms": 1.8427
+    }
+  },
+  "edge_iiotset_domain_proxy_benchmark": {
+    "evaluation_type": "EDGE_IIOTSET_DOMAIN_PROXY_GROUND_TRUTH",
+    "total_proxy_episodes": 25,
+    "causal_ft": {
+      "top_1_recall": 0.0,
+      "top_3_recall": 0.0,
+      "top_5_recall": 0.0,
+      "mean_diagnosis_latency_ms": 0.2511
+    },
+    "rcd": {
+      "top_1_recall": 8.0,
+      "top_3_recall": 28.0,
+      "top_5_recall": 32.0,
+      "mean_diagnosis_latency_ms": 13.6292
+    },
+    "unmapped_attacks": "NR"
+  }
+}

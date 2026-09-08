@@ -1,0 +1,226 @@
+{
+  "feature_scaling_D": {
+    "proposed_causal_ft": {
+      "name": "Proposed Causal FT",
+      "dimension_levels": [
+        10,
+        25,
+        50,
+        62
+      ],
+      "latencies_ms": [
+        0.012,
+        0.0123,
+        0.0131,
+        0.0137
+      ],
+      "throughputs_rec_sec": [
+        83142.8,
+        81469.71,
+        76080.92,
+        73056.16
+      ],
+      "empirical_scaling_exponent_alpha": 0.0686
+    },
+    "paper1_ipft": {
+      "name": "IPFT",
+      "dimension_levels": [
+        10,
+        25,
+        50,
+        62
+      ],
+      "latencies_ms": [
+        0.3293,
+        0.4159,
+        0.3316,
+        0.3268
+      ],
+      "throughputs_rec_sec": [
+        3037.1,
+        2404.47,
+        3015.62,
+        3059.96
+      ],
+      "empirical_scaling_exponent_alpha": -0.0207
+    },
+    "paper2_bwoaif": {
+      "name": "BWOAIF",
+      "dimension_levels": [
+        10,
+        25,
+        50,
+        62
+      ],
+      "latencies_ms": [
+        0.0504,
+        0.0546,
+        0.0516,
+        0.0499
+      ],
+      "throughputs_rec_sec": [
+        19832.61,
+        18302.95,
+        19374.21,
+        20045.26
+      ],
+      "empirical_scaling_exponent_alpha": -0.0043
+    },
+    "paper3_rcd": {
+      "name": "RCD",
+      "dimension_levels": [
+        10,
+        25,
+        50,
+        62
+      ],
+      "latencies_ms": [
+        0.0004,
+        0.0004,
+        0.0004,
+        0.0005
+      ],
+      "throughputs_rec_sec": [
+        2395783.39,
+        2470965.99,
+        2462447.63,
+        1888217.46
+      ],
+      "empirical_scaling_exponent_alpha": 0.0811
+    },
+    "paper4_pregan": {
+      "name": "PreGAN",
+      "dimension_levels": [
+        10,
+        25,
+        50,
+        62
+      ],
+      "latencies_ms": [
+        0.3277,
+        0.4068,
+        0.4024,
+        0.3834
+      ],
+      "throughputs_rec_sec": [
+        3051.93,
+        2457.95,
+        2484.91,
+        2608.43
+      ],
+      "empirical_scaling_exponent_alpha": 0.0916
+    }
+  },
+  "system_scaling_M": {
+    "proposed_causal_ft": {
+      "name": "Proposed Causal FT",
+      "node_levels": [
+        5,
+        10,
+        20,
+        50
+      ],
+      "latencies_ms": [
+        0.0156,
+        0.014,
+        0.0139,
+        0.0145
+      ],
+      "throughputs_rec_sec": [
+        64068.89,
+        71375.04,
+        71992.17,
+        69149.17
+      ],
+      "empirical_scaling_exponent_alpha": -0.027
+    },
+    "paper1_ipft": {
+      "name": "IPFT",
+      "node_levels": [
+        5,
+        10,
+        20,
+        50
+      ],
+      "latencies_ms": [
+        0.4802,
+        0.424,
+        0.4041,
+        0.3742
+      ],
+      "throughputs_rec_sec": [
+        2082.26,
+        2358.68,
+        2474.91,
+        2672.25
+      ],
+      "empirical_scaling_exponent_alpha": -0.1037
+    },
+    "paper2_bwoaif": {
+      "name": "BWOAIF",
+      "node_levels": [
+        5,
+        10,
+        20,
+        50
+      ],
+      "latencies_ms": [
+        0.0607,
+        0.0641,
+        0.0569,
+        0.0584
+      ],
+      "throughputs_rec_sec": [
+        16486.74,
+        15607.97,
+        17579.09,
+        17119.03
+      ],
+      "empirical_scaling_exponent_alpha": -0.0301
+    },
+    "paper3_rcd": {
+      "name": "RCD",
+      "node_levels": [
+        5,
+        10,
+        20,
+        50
+      ],
+      "latencies_ms": [
+        0.0006,
+        0.0005,
+        0.0006,
+        0.0009
+      ],
+      "throughputs_rec_sec": [
+        1567889.63,
+        1901502.18,
+        1656246.12,
+        1125277.1
+      ],
+      "empirical_scaling_exponent_alpha": 0.1938
+    },
+    "paper4_pregan": {
+      "name": "PreGAN",
+      "node_levels": [
+        5,
+        10,
+        20,
+        50
+      ],
+      "latencies_ms": [
+        0.3621,
+        0.3378,
+        0.3134,
+        0.3501
+      ],
+      "throughputs_rec_sec": [
+        2761.76,
+        2960.69,
+        3190.46,
+        2856.11
+      ],
+      "empirical_scaling_exponent_alpha": -0.0188
+    }
+  }
+}

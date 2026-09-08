@@ -1,0 +1,5 @@
+algorithm,selected_threshold,selection_rule,validation_precision,validation_recall,validation_f1,validation_roc_auc,validation_pr_auc,score_min,score_mean,score_max,scoring_time_sec
+Proposed Causal FT,0.15,maximize_validation_F1,0.4142,0.6292,0.4995,0.7137,0.3801,0.1186,0.1698,1.0,0.44
+"IPFT (Theodoropoulos et al., 2022)",0.01,maximize_validation_F1,0.2276,1.0,0.3709,0.435,0.2026,0.3312,0.4956,0.5275,9.82
+"BWOAIF (Hannák et al., 2023)",0.49,maximize_validation_F1,0.2552,0.8139,0.3886,0.6044,0.2892,0.4413,0.5022,0.6061,0.98
+"PreGAN (Tuli et al., 2022)",0.01,maximize_validation_F1,0.2276,1.0,0.3709,0.5289,0.3232,0.0179,0.0195,0.0229,10.13

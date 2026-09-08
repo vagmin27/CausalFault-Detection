@@ -18,7 +18,7 @@ dist/
 *.pth
 
 # Results
-results/
+# results/
 
 # IDE & OS
 .vscode/
