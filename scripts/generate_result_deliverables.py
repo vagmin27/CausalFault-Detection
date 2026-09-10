@@ -4,8 +4,8 @@ Master PPT Deliverables Generator (Phases 6, 7, 8).
 
 Generates:
 1. All 26 final publication-grade 300-DPI plots under results/plots/final/
-2. results/tables/final_ppt_algorithm_comparison.csv
-3. results/tables/final_ppt_key_results.csv
+2. results/tables/algorithm_comparison_summary.csv
+3. results/tables/key_results_summary.csv
 4. results/tables/metric_definitions.csv
 5. results/plots/final/README.md
 
@@ -919,7 +919,7 @@ def generate_ppt_tables(bench_v2, rca_data, df_conf):
         rows_23.append(row)
 
     df_23 = pd.DataFrame(rows_23)
-    path_23 = os.path.join(TABLES_DIR, "final_ppt_algorithm_comparison.csv")
+    path_23 = os.path.join(TABLES_DIR, "algorithm_comparison_summary.csv")
     df_23.to_csv(path_23, index=False)
     print(f"[OK] Saved comprehensive 23-row comparison: {path_23}")
 
@@ -943,7 +943,7 @@ def generate_ppt_tables(bench_v2, rca_data, df_conf):
         "Estimated Energy Consumption",
     ]
     df_key = df_23[df_23["Metric"].isin(key_metrics_subset)].copy()
-    path_key = os.path.join(TABLES_DIR, "final_ppt_key_results.csv")
+    path_key = os.path.join(TABLES_DIR, "key_results_summary.csv")
     df_key.to_csv(path_key, index=False)
     print(f"[OK] Saved slide-ready key results table: {path_key}")
 
@@ -1075,9 +1075,9 @@ Placing algorithms with fundamentally disjoint capabilities on the same comparat
 ---
 
 ## 5. Summary Tables
-* **[final_ppt_algorithm_comparison.csv](file:///c:/Users/khush/Desktop/causal/CausalFault-Detection/results/tables/final_ppt_algorithm_comparison.csv)**: Comprehensive 23-row multi-metric comparison.
-* **[final_ppt_key_results.csv](file:///c:/Users/khush/Desktop/causal/CausalFault-Detection/results/tables/final_ppt_key_results.csv)**: Slide-ready executive comparison table.
-* **[metric_definitions.csv](file:///c:/Users/khush/Desktop/causal/CausalFault-Detection/results/tables/metric_definitions.csv)**: Mathematical definitions, units, and directionality guide.
+* **[algorithm_comparison_summary.csv](../results/tables/algorithm_comparison_summary.csv)**: Comprehensive 23-row multi-metric comparison.
+* **[key_results_summary.csv](../results/tables/key_results_summary.csv)**: Concise summary of key experimental results.
+* **[metric_definitions.csv](../results/tables/metric_definitions.csv)**: Mathematical definitions, units, and directionality guide.
 """
     with open(readme_path, "w", encoding="utf-8") as f:
         f.write(content)

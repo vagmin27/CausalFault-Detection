@@ -78,5 +78,5 @@ Placing algorithms with fundamentally disjoint capabilities on the same comparat
 ---
 
 ## 4. Summary Table Reference
-* **[benchmark_summary_mean_std.csv](file:///c:/Users/khush/Desktop/causal/CausalFault-Detection/results/tables/benchmark_summary_mean_std.csv)**: Full aggregated statistical summary with sample means, standard deviations, and 95% confidence intervals.
-* **[benchmark_results_by_seed.csv](file:///c:/Users/khush/Desktop/causal/CausalFault-Detection/results/tables/benchmark_results_by_seed.csv)**: Granular record of every measurement for every algorithm and random seed.
+* **[benchmark_summary_mean_std.csv](../tables/benchmark_summary_mean_std.csv)**: Full aggregated statistical summary with sample means, standard deviations, and 95% confidence intervals.
+* **[benchmark_results_by_seed.csv](../tables/benchmark_results_by_seed.csv)**: Granular record of every measurement for every algorithm and random seed.
