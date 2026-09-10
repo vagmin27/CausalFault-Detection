@@ -97,7 +97,11 @@ def run_benchmark_trial(
     harness = CommonDataHarness(config)
 
     algo = algo_cls()
-    algo.initialize({"threshold": threshold, "upper_threshold": threshold})
+    algo.initialize({
+        "threshold": threshold,
+        "upper_threshold": threshold,
+        "detection_threshold": threshold,
+    })
     algo.fit(train_data)
     algo.start()
 
